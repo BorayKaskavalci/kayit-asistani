@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Kayıt Asistanı - OBS ders kaydı için akıllı yardımcı</title>
+  <meta name="description" content="OBS ders kaydındaki çakışma, ön koşul, kontenjan ve danışman onayı sorunlarını önceden gösteren demo yardımcı uygulama. / A demo helper for course-registration problems.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">İçeriğe geç</a>
+
+  <header class="app-header">
+    <div class="wrap header-row">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">KA</span>
+        <div>
+          <h1 data-i18n="app.name">Kayıt Asistanı</h1>
+          <p class="subtitle" data-i18n="app.subtitle">OBS ders kaydı için akıllı yardımcı</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="student-chip" id="studentChip"></div>
+        <button class="cart-pill" id="cartPill" type="button"></button>
+        <button class="btn small ghost" type="button" data-act="rules-open"><span aria-hidden="true">&#9432;</span> <span data-i18n="hdr.rules">Kurallar</span></button>
+        <button class="lang-btn" id="langBtn" type="button" data-act="lang" data-i18n-aria="hdr.langAria" aria-label="Dili değiştir"><span>TR</span><span>EN</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="demo-banner" role="note">
+    <div class="wrap"><strong data-i18n="demo.label">DEMO VERİSİ</strong> <span id="demoNote"></span></div>
+  </div>
+
+  <nav class="tabs" data-i18n-aria="nav.aria" aria-label="Bölümler">
+    <div class="wrap tabs-row" role="tablist">
+      <button class="tab" role="tab" id="t-plan" aria-controls="tab-plan" data-tab="plan"><span class="tab-n">1</span> <span data-i18n="tab.plan">Ders Seç &amp; Program</span></button>
+      <button class="tab" role="tab" id="t-status" aria-controls="tab-status" data-tab="status"><span class="tab-n">2</span> <span data-i18n="tab.status">Ön Koşul &amp; Kontenjan</span></button>
+      <button class="tab" role="tab" id="t-grad" aria-controls="tab-grad" data-tab="grad"><span class="tab-n">3</span> <span data-i18n="tab.grad">Mezuniyet Takibi</span></button>
+      <button class="tab" role="tab" id="t-flow" aria-controls="tab-flow" data-tab="flow"><span class="tab-n">4</span> <span data-i18n="tab.flow">Danışman Onayı</span> <span class="tab-dot" id="flowDot" hidden></span></button>
+      <button class="tab" role="tab" id="t-reg" aria-controls="tab-reg" data-tab="reg"><span class="tab-n">5</span> <span data-i18n="tab.reg">Kayıt Günü Planı</span></button>
+    </div>
+  </nav>
+
+  <main id="main" class="wrap">
+
+    <!-- 1. DERS SEÇ & PROGRAM -->
+    <section id="tab-plan" class="panel" role="tabpanel" aria-labelledby="t-plan" tabindex="-1">
+      <div class="card intro-card" id="introCard" hidden>
+        <div class="card-head"><h2 class="card-title" data-i18n="intro.title"></h2><button type="button" class="btn small ghost" data-act="intro-close" data-i18n="intro.close"></button></div>
+        <ol class="how">
+          <li><strong data-i18n="intro.s1t"></strong><span data-i18n="intro.s1p"></span></li>
+          <li><strong data-i18n="intro.s2t"></strong><span data-i18n="intro.s2p"></span></li>
+          <li><strong data-i18n="intro.s3t"></strong><span data-i18n="intro.s3p"></span></li>
+        </ol>
+      </div>
+      <div class="plan-layout">
+        <div class="col-list">
+          <div class="card filters">
+            <h2 class="card-title" data-i18n="f.title">Ders ara</h2>
+            <label class="field search">
+              <span class="sr-only" data-i18n="f.searchLbl">Ders ara</span>
+              <input id="fQ" type="search" data-i18n-ph="f.searchPh" placeholder="Ders adı, kodu veya hoca" autocomplete="off">
+            </label>
+            <div class="filter-row">
+              <label class="field"><span data-i18n="f.type">Tür</span><select id="fType"></select></label>
+              <label class="field"><span data-i18n="f.sem">Yarıyıl</span><select id="fSem"></select></label>
+            </div>
+            <div class="checks">
+              <label class="check"><input type="checkbox" id="fOpen"> <span data-i18n="f.open">Sadece bu dönem açılanlar</span></label>
+              <label class="check"><input type="checkbox" id="fAvail"> <span data-i18n="f.avail">Sadece kontenjanı olanlar</span></label>
+              <label class="check"><input type="checkbox" id="fElig"> <span data-i18n="f.elig">Sadece alabileceklerim</span></label>
+              <label class="check"><input type="checkbox" id="fHidePassed" checked> <span data-i18n="f.hidePassed">Geçtiğim dersleri gizle</span></label>
+            </div>
+            <p class="muted small" id="resultCount" aria-live="polite"></p>
+            <p class="alert warn small" data-i18n="f.quotaNote"></p>
+          </div>
+          <div id="courseList"></div>
+        </div>
+
+        <div class="col-side">
+          <div class="card">
+            <div class="card-head">
+              <h2 class="card-title" data-i18n="cart.title">Sepetim</h2>
+              <div class="btn-row">
+                <label class="field inline scenario"><span data-i18n="sc.label">Senaryo</span><select id="scenarioSel"></select></label>
+                <button type="button" class="btn small ghost" data-act="clear-cart" data-i18n="btn.clear">Temizle</button>
+              </div>
+            </div>
+            <div id="cartPanel"></div>
+            <div class="limit-row">
+              <label class="field inline">
+                <span><span id="limitLabel"></span> <em class="muted" id="limitAuto"></em></span>
+                <input type="number" id="limitEcts" min="1" max="99" inputmode="numeric">
+              </label>
+              <button type="button" class="btn small ghost" data-act="limit-auto" data-i18n="limit.btnAuto">Otomatik</button>
+            </div>
+            <p class="muted small" data-i18n="limit.unitNote"></p>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title" data-i18n="tt.title">Haftalık program</h2>
+            <div id="timetable" class="tt-scroll"></div>
+            <div class="legend">
+              <span><i class="lg lg-ok"></i> <span data-i18n="lg.ok">Seçili</span></span>
+              <span><i class="lg lg-conflict"></i> <span data-i18n="lg.conflict">Çakışma</span></span>
+              <span><i class="lg lg-soft"></i> <span data-i18n="lg.soft">İzinli çakışma</span></span>
+              <span><i class="lg lg-preview"></i> <span data-i18n="lg.preview">Önizleme</span></span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title" data-i18n="pref.title">Program tercihlerin</h2>
+            <div class="checks">
+              <label class="check"><input type="checkbox" id="prefDays"> <span data-i18n="pref.days"></span></label>
+              <label class="check"><input type="checkbox" id="prefEarly"> <span data-i18n="pref.early"></span></label>
+              <label class="check"><input type="checkbox" id="prefGaps"> <span data-i18n="pref.gaps"></span></label>
+              <label class="field inline"><span data-i18n="pref.free"></span><select id="prefFree"></select></label>
+            </div>
+            <div class="btn-row"><button type="button" class="btn primary" data-act="auto" data-i18n="btn.auto">Programları üret</button></div>
+            <div id="autoResult" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ÖN KOŞUL & KONTENJAN -->
+    <section id="tab-status" class="panel" role="tabpanel" aria-labelledby="t-status" tabindex="-1" hidden>
+      <div class="intro">
+        <h2 data-i18n="status.title"></h2>
+        <p class="muted" data-i18n="status.intro"></p>
+      </div>
+      <div class="seg" role="group">
+        <button type="button" class="seg-btn" data-act="sv" data-v="elig" data-sv="elig" data-i18n="sv.elig"></button>
+        <button type="button" class="seg-btn" data-act="sv" data-v="cart" data-sv="cart" data-i18n="sv.cart"></button>
+        <button type="button" class="seg-btn" data-act="sv" data-v="browse" data-sv="browse" data-i18n="sv.browse"></button>
+      </div>
+      <div id="sv-elig"><div id="svElig"></div></div>
+      <div id="sv-cart" hidden><div id="svCart"></div></div>
+      <div id="sv-browse" hidden>
+        <div class="card">
+          <label class="field">
+            <span data-i18n="browse.lbl"></span>
+            <input id="browseQ" list="courseOptions" data-i18n-ph="browse.ph" autocomplete="off">
+            <datalist id="courseOptions"></datalist>
+          </label>
+        </div>
+        <div id="browseResult"></div>
+      </div>
+    </section>
+
+    <!-- 3. MEZUNİYET -->
+    <section id="tab-grad" class="panel" role="tabpanel" aria-labelledby="t-grad" tabindex="-1" hidden>
+      <div id="gradView"></div>
+    </section>
+
+    <!-- 4. DANIŞMAN ONAYI -->
+    <section id="tab-flow" class="panel" role="tabpanel" aria-labelledby="t-flow" tabindex="-1" hidden>
+      <div id="flowView"></div>
+    </section>
+
+    <!-- 5. KAYIT GÜNÜ PLANI -->
+    <section id="tab-reg" class="panel" role="tabpanel" aria-labelledby="t-reg" tabindex="-1" hidden>
+      <div id="regView"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p><strong data-i18n="app.name">Kayıt Asistanı</strong> - <span data-i18n="foot.text"></span></p>
+      <p id="footGroup"></p>
+      <p><button type="button" class="linklike" data-act="reset-all" data-i18n="foot.reset"></button></p>
+    </div>
+  </footer>
+
+  <dialog id="rulesDlg" class="dlg" aria-labelledby="rulesTitle">
+    <div class="dlg-head"><h2 id="rulesTitle" data-i18n="rules.title"></h2><button type="button" class="btn small" data-act="rules-close" data-i18n="rules.close"></button></div>
+    <div id="rulesBody" class="dlg-body"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="data.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
