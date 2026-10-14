@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="extension/lib/roadmap.css">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">İçeriğe geç</a>
@@ -26,6 +27,8 @@
       <div class="header-right">
         <div class="student-chip" id="studentChip"></div>
         <button class="cart-pill" id="cartPill" type="button"></button>
+        <a class="btn small ghost ext-dl" href="extension.zip" download title="Kayıt Asistanı – OBS (Chrome, Manifest V3)"><span aria-hidden="true">&#11015;</span> <span data-i18n="hdr.ext">Chrome eklentisini indir</span></a>
+        <a class="btn small ghost" href="demo-obs/?dev=1" data-i18n-aria="hdr.demoObsAria" aria-label="Eklentiyi kurmadan demo OBS içinde dene"><span aria-hidden="true">&#9654;</span> <span data-i18n="hdr.demoObs">Demo OBS</span></a>
         <button class="btn small ghost" type="button" data-act="rules-open"><span aria-hidden="true">&#9432;</span> <span data-i18n="hdr.rules">Kurallar</span></button>
         <button class="lang-btn" id="langBtn" type="button" data-act="lang" data-i18n-aria="hdr.langAria" aria-label="Dili değiştir"><span>TR</span><span>EN</span></button>
       </div>
@@ -186,6 +189,8 @@
 
   <script src="data.js"></script>
   <script src="i18n.js"></script>
+  <script src="extension/lib/kayit-core.js"></script>
+  <script src="extension/lib/roadmap-view.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

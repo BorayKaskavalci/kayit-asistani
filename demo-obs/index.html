@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr" data-root="..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Öğrenci Bilgi Sistemi – DEMO</title>
+<style>
+html,body{height:100%;margin:0;overflow:hidden}
+body{font-family:"Open Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:13px;background:#eef0f3;display:flex;flex-direction:column}
+#topbar{flex:0 0 46px;background:#1f2a37;color:#fff;display:flex;align-items:center;gap:12px;padding:0 12px;position:relative}
+#topbar .ttl{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#topbar .term{background:#5b5bd6;border-radius:12px;padding:2px 10px;font-size:12px;white-space:nowrap}
+#topbar .user{margin-left:auto;font-size:12px;white-space:nowrap;opacity:.9}
+#burger{display:none;background:none;border:1px solid #556;color:#fff;border-radius:3px;font-size:16px;padding:2px 8px;cursor:pointer}
+#ribbon{background:#c62828;color:#fff;text-align:center;font-weight:700;font-size:12px;padding:3px 8px;letter-spacing:.2px}
+#main{flex:1 1 auto;display:flex;min-height:0}
+#side{flex:0 0 230px;background:#2b3644;color:#cfd6df;overflow-y:auto}
+#side .grp{padding:10px 14px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#8d99a8}
+#side a{display:block;padding:8px 14px 8px 22px;color:#dfe5ec;text-decoration:none;border-left:3px solid transparent}
+#side a:hover{background:#364457}
+#side a.active{background:#364457;border-left-color:#7c7cf0;color:#fff;font-weight:600}
+.main-footer{flex:0 0 auto;background:#1f2a37;padding:3px 12px;text-align:right}
+.footer-session-chip{color:#cfd6df;font-size:12px;text-decoration:none;background:#2b3644;border-radius:10px;padding:2px 10px}
+.footer-session-chip.warn{background:#c62828;color:#fff}
+#content{flex:1 1 auto;min-width:0}
+#IFRAME1{width:100%;height:100%;border:0;background:#eef0f3;display:block}
+@media (max-width:767px){
+  #burger{display:block}
+  #side{position:absolute;top:73px;left:0;bottom:0;z-index:5;display:none;width:240px;box-shadow:2px 0 8px rgba(0,0,0,.4)}
+  #side.open{display:block}
+  #topbar .user{display:none}
+  #topbar .ttl{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <button id="burger" type="button" aria-label="Menü">&#9776;</button>
+  <span class="ttl">Öğrenci Bilgi Sistemi – DEMO</span>
+  <span class="term">2026-2027 Güz</span>
+  <span class="user">Demo Öğrenci</span>
+</div>
+<div id="ribbon">DEMO – gerçek OBS değildir / not the real OBS</div>
+<div id="main">
+  <nav id="side">
+    <div class="grp">Genel İşlemler</div>
+    <a href="#" data-page="std/st_akademik_takvim.html">Akademik Takvim</a>
+    <a href="#" data-page="std/program_dersleri.html">Açılan Bölüm Dersleri</a>
+    <a href="#" data-page="std/sinav_takvimi.html">Sınav Takvimi</a>
+    <a href="#" data-page="std/std_time_table.html">Ders Programı</a>
+    <a href="#" data-page="std/std_time_table_dep.html">Bölüm Ders Programı</a>
+    <div class="grp">Ders ve Dönem İşlemleri</div>
+    <a href="#" data-page="std/ders_kayit_ozet.html">Ders Kayıt</a>
+    <a href="#" data-page="std/not_listesi_op.html">Not Listesi</a>
+    <a href="#" data-page="std/ders_yoklama_durum.html">Devamsızlık Durumu</a>
+    <a href="#" data-page="std/ogrenci_mufredat_ders.html">Müfredat Durum</a>
+    <div class="grp">Demo</div>
+    <a href="#" data-page="std/home.html" class="active">Ana Sayfa</a>
+  </nav>
+  <div id="content"><iframe id="IFRAME1" name="IFRAME1" title="İçerik" src="std/home.html"></iframe></div>
+</div>
+<footer class="main-footer"><a id="prolizSessionChip" class="footer-session-chip" href="#" onclick="return false">Oturum: <span id="prolizSessionLeft">60:00</span></a></footer>
+<script>
+(function(){
+  var left=/[?&]fastsession=1/.test(location.search)?5*60+20:60*60, el=document.getElementById('prolizSessionLeft'), chip=document.getElementById('prolizSessionChip');
+  function tick(){var m=Math.floor(left/60),s=left%60;el.textContent=('0'+m).slice(-2)+':'+('0'+s).slice(-2);chip.classList.toggle('warn',left<=300);if(left>0)left--;}
+  tick();setInterval(tick,1000);
+})();
+(function(){
+  var frame=document.getElementById('IFRAME1'), side=document.getElementById('side');
+  var links=side.querySelectorAll('a[data-page]');
+  function go(page){
+    frame.src=page+location.search;
+    Array.prototype.forEach.call(links,function(a){a.classList.toggle('active',a.getAttribute('data-page')===page);});
+    side.classList.remove('open');
+  }
+  Array.prototype.forEach.call(links,function(a){
+    a.addEventListener('click',function(e){e.preventDefault();go(a.getAttribute('data-page'));});
+  });
+  document.getElementById('burger').addEventListener('click',function(){side.classList.toggle('open');});
+  frame.src='std/home.html'+location.search;
+})();
+</script>
+<script>if(/[?&]dev=1/.test(location.search)){var s=document.createElement('script');s.src=(document.documentElement.getAttribute('data-root')||'..')+'/extension/dev/loader.js?v='+Date.now();document.body.appendChild(s);}</script>
+</body>
+</html>

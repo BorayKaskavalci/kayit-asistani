@@ -1,0 +1,88 @@
+/* DEMO-OBS ortak stil: OBS (Proliz OİBS) düzenine benzer, tarafsız. Dış CDN yok. */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Open Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:13px;color:#333;background:#eef0f3;line-height:1.4}
+.row{display:flex;flex-wrap:wrap;margin:0}
+[class*="col-"]{padding:4px 8px;min-width:0}
+.col-1{flex:0 0 8.333%}.col-2{flex:0 0 16.666%}.col-3{flex:0 0 25%}.col-4{flex:0 0 33.333%}
+.col-5{flex:0 0 41.666%}.col-6,.col-md-6{flex:0 0 50%}.col-7{flex:0 0 58.333%}.col-8{flex:0 0 66.666%}
+.col-9{flex:0 0 75%}.col-10{flex:0 0 83.333%}.col-12{flex:0 0 100%}
+.page{padding:12px;max-width:1280px;margin:0 auto}
+.card{background:#fff;border:1px solid #dcdfe4;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.05);margin-bottom:12px}
+.card-head{padding:8px 12px;border-bottom:1px solid #e3e6ea;font-weight:600;background:#f7f8fa;border-radius:4px 4px 0 0}
+.card-body{padding:12px}
+h1,h2,h3{margin:0 0 8px}
+h2{font-size:16px}
+.demo-note{background:#fff4e5;border:1px solid #ffb74d;color:#8a4b00;padding:8px 12px;border-radius:4px;margin-bottom:12px}
+.alert-warn{background:#fdecea;border:1px solid #f5c2c0;color:#a12622;padding:10px 12px;border-radius:4px;margin-bottom:12px;font-weight:600}
+.btn{display:inline-block;padding:5px 10px;border:1px solid #b9c0ca;background:#f2f4f7;color:#333;border-radius:3px;font:inherit;cursor:pointer;margin:2px}
+.btn:hover{background:#e6e9ee}
+/* ikonlar (Font Awesome yerine) */
+i.fa,i.fal{font-style:normal;display:inline-block}
+.fa-check::before{content:"\2713"}
+.fa-check-circle::before{content:"\2714"}
+.fa-exclamation-triangle::before{content:"\26A0"}
+.text-success{color:#2e9e4f}
+.text-danger{color:#d32f2f}
+.fa-blink{animation:fablink 1.2s steps(2,start) infinite}
+@keyframes fablink{to{visibility:hidden}}
+/* tablolar */
+table{border-collapse:collapse}
+.myGridClass,.ProlizMGrid{width:100%;background:#fff;border:1px solid #ccd1d9}
+.myGridClass th,.ProlizMGrid th{background:#4b5a6b;color:#fff;font-weight:600;padding:5px 6px;text-align:left;border:1px solid #ccd1d9}
+.myGridClass td,.ProlizMGrid td{padding:4px 6px;border:1px solid #dfe3e8;vertical-align:top}
+.myGridClass tr:nth-child(even) td,.ProlizMGrid tr:nth-child(even) td{background:#f8f9fb}
+.tt-dep-layout{width:100%}
+.tt-dep-layout>tbody>tr>td{width:50%;vertical-align:top;padding:6px}
+.tt-day{font-weight:700;margin:4px 0;color:#2c3e50}
+.sel-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.sel-bar label{display:block;font-size:11px;color:#666;margin-bottom:2px}
+.sel-bar select{padding:5px;border:1px solid #b9c0ca;border-radius:3px;min-width:160px;font:inherit;max-width:100%}
+/* müfredat */
+.mufredat-wrap{overflow-x:auto}
+.mufredat-grup-baslik{background:#4b5a6b;color:#fff;font-weight:700;padding:6px 10px;margin-top:10px;border-radius:3px 3px 0 0}
+.mufredat-kolon-baslik{display:flex;background:#e9edf2;font-weight:600;font-size:11px;border:1px solid #d5dae1}
+.mufredat-kolon-baslik>div{flex:0 0 50%;display:flex}
+.mufredat-kolon-baslik span{padding:3px 6px}
+.mufredat-group-body{border:1px solid #d5dae1;border-top:0;background:#fff}
+.data-row{border-bottom:1px solid #eceff3}
+.data-row>div{display:flex;flex:0 0 50%;max-width:50%;padding:0}
+.data-row>div>div{padding:4px 6px}
+.data-row .c-code{flex:0 0 17%}.data-row .c-name{flex:1 1 auto}.data-row .c-zs{flex:0 0 34px}.data-row .c-n{flex:0 0 40px}
+.data-row .c-term{flex:0 0 72px;white-space:nowrap}.data-row .c-grade{flex:0 0 58px;font-weight:700}
+.mf-ok{background:#eaf7ee}.mf-fail{background:#fdeceb}.mf-gray{background:#f1f2f4}.mf-blue{background:#e8f1fb}
+.leg{display:inline-block;padding:1px 8px;margin:2px 6px 2px 0;border-radius:3px;font-size:11px}
+.leg.r{background:#fdeceb;color:#b3261e}.leg.b{background:#e8f1fb;color:#1a5fb4}.leg.g{background:#eaf7ee;color:#217a3c}.leg.s{background:#f1f2f4;color:#555}
+/* açılan dersler */
+.rpt-panel{background:#fff;border:1px solid #dcdfe4;border-radius:4px}
+.rpt-panel-header{padding:8px 12px;font-weight:600;background:#f7f8fa;border-bottom:1px solid #e3e6ea}
+.rpt-panel-body{padding:0}
+.rpt-header,.rpt-row{display:flex;flex-wrap:nowrap;align-items:center;border-bottom:1px solid #eceff3}
+.rpt-header{background:#4b5a6b;color:#fff;font-weight:600}
+.rpt-header>div,.rpt-row>div{padding:5px 6px;flex:0 0 7%;min-width:0}
+.rpt-header>div:nth-child(3),.rpt-row>div:nth-child(3){flex:1 1 auto}
+.rpt-header>div:nth-child(2),.rpt-row>div:nth-child(2){flex:0 0 12%}
+.rpt-row:nth-child(even){background:#f8f9fb}
+/* kayıt özeti */
+.tbl-info{width:100%;background:#fff;border:1px solid #ccd1d9;margin-bottom:12px}
+.tbl-info td{padding:5px 8px;border:1px solid #e3e6ea}
+.tbl-info td.lbl{background:#f1f3f6;font-weight:600;width:14%;white-space:nowrap}
+.tbl-total{margin:8px 0;font-weight:700}
+.scroll-x{overflow-x:auto}
+@media (max-width:767px){
+  body{font-size:12px}.page{padding:6px}
+  .col-md-6{flex:0 0 100%}
+  .tt-dep-layout,.tt-dep-layout>tbody,.tt-dep-layout>tbody>tr,.tt-dep-layout>tbody>tr>td{display:block;width:100%}
+  .data-row>div{flex:0 0 100%;max-width:100%;flex-wrap:wrap}
+  .mufredat-kolon-baslik>div{flex:0 0 100%}.mufredat-kolon-baslik>div+div{display:none}
+  .rpt-header,.rpt-row{min-width:640px}.rpt-panel-body{overflow-x:auto}
+  .tbl-info td.lbl{white-space:normal;width:auto}
+  .ProlizMGrid{min-width:760px}
+}
+/* col-* tabanlı rpt-row (devamsızlık) */
+.rpt-row>.col-1,.rpt-header>.col-1{flex:0 0 8.333%}.rpt-row>.col-2,.rpt-header>.col-2{flex:0 0 16.666%}.rpt-row>.col-3,.rpt-header>.col-3{flex:0 0 33.333%}
+.d-flex{display:flex;align-items:center;gap:8px}.text-right{text-align:right}
+.ex-gt{border-collapse:collapse;margin-bottom:8px}.ex-gt td{padding:4px 8px;border:1px solid #dfe3e8}
+.pivot-cell{min-width:110px}.course-info{margin-bottom:4px}.course-code{font-weight:700}.course-name{font-size:11px}.course-room,.course-instructor{font-size:11px;color:#666}
+.mb-0{margin-bottom:0}
+@media (max-width:767px){.mhide{display:none!important}.rpt-row>.col-1,.rpt-header>.col-1{flex:0 0 22%}.rpt-row>.col-3,.rpt-header>.col-3{flex:1 1 auto}.rpt-row>.col-2,.rpt-header>.col-2{flex:0 0 30%}.rpt-header,.rpt-row{min-width:0}}

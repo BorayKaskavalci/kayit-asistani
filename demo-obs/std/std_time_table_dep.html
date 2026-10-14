@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr" data-root="../..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bölüm Ders Programı – DEMO</title>
+<link rel="stylesheet" href="../obs.css">
+<script src="timetable-data.js"></script>
+</head>
+<body>
+<div class="page">
+  <div class="demo-note"><b>DEMO</b> – gerçek OBS değildir. Veriler 2026-2027 Güz Makine Mühendisliği ders programından alınmıştır.</div>
+  <div class="card">
+    <div class="card-head">Bölüm Ders Programı</div>
+    <div class="card-body">
+      <form id="form1" onsubmit="return false" class="sel-bar">
+        <div><label for="cmbDonemler">Dönem</label>
+          <select name="cmbDonemler" id="cmbDonemler"><option value="20262">2026-2027 Güz</option><option value="20261" disabled>2025-2026 Bahar</option></select></div>
+        <div><label for="cmbProgram">Program</label>
+          <select name="cmbProgram" id="cmbProgram"><option selected="selected" value="401166">MAKİNE MÜHENDİSLİĞİ</option></select></div>
+        <div><label for="cmbSinif">Sınıf</label>
+          <select name="cmbSinif" id="cmbSinif"><option value="1">1.Sınıf</option><option value="2">2.Sınıf</option><option value="3">3.Sınıf</option><option value="4">4.Sınıf</option></select></div>
+      </form>
+    </div>
+  </div>
+  <div class="card"><div class="card-body" id="ttHost" style="padding:6px"></div></div>
+</div>
+<script>
+(function(){
+  var DAYS=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+  var FAC={MATH:'FEN-EDEBİYAT FAKÜLTESİ - MATEMATİK - MATEMATİK',PHYS:'FEN-EDEBİYAT FAKÜLTESİ - FİZİK - FİZİK',CHEM:'FEN-EDEBİYAT FAKÜLTESİ - KİMYA - KİMYA',
+    SOFL:'YABANCI DİLLER YÜKSEKOKULU',EEE:'MÜHENDİSLİK FAKÜLTESİ - ELEKTRİK-ELEKTRONİK MÜHENDİSLİĞİ',ENGR:'MÜHENDİSLİK FAKÜLTESİ'};
+  var ME='MÜHENDİSLİK FAKÜLTESİ - MAKİNE MÜHENDİSLİĞİ - MAKİNE MÜHENDİSLİĞİ';
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  var m=/[?&]sinif=(\d)/.exec(location.search), sinif=m?parseInt(m[1],10):3;
+  if(sinif<1||sinif>4) sinif=3;
+  var sel=document.getElementById('cmbSinif'); sel.selectedIndex=sinif-1;
+  sel.addEventListener('change',function(){
+    var q=location.search.replace(/[?&]sinif=\d*/g,'').replace(/^&/,'?');
+    q+=(q.indexOf('?')<0?'?':'&')+'sinif='+sel.value;
+    location.search=q; /* postback benzetimi: iframe yeniden yüklenir */
+  });
+  var rows=(window.OBS_TIMETABLE&&window.OBS_TIMETABLE.data[sinif+'.Sınıf'])||[];
+  var html='<table class="tt-dep-layout"><tbody>', cells=[];
+  for(var d=0;d<7;d++){
+    var r=rows.filter(function(x){return x[0]===DAYS[d];});
+    if(d>=5&&!r.length) continue;
+    var t='<div class="tt-day">'+DAYS[d]+'</div><table cellspacing="0" rules="all" class="myGridClass" border="1" id="grd'+d+'" style="font-family:Open Sans;font-size:8pt;font-weight:normal;text-decoration:none;width:100%;border-collapse:collapse;"><tbody><tr><th scope="col">Saat</th><th scope="col">Ders Kodu</th><th scope="col">Ders Adı</th><th scope="col">Derslik</th><th scope="col">Öğretim Elemanı</th></tr>';
+    r.forEach(function(x,i){
+      var pre=x[2].split(' ')[0], title=pre==='ME'?ME:(FAC[pre]||'MÜHENDİSLİK FAKÜLTESİ');
+      t+='<tr><td data-label="Saat">'+esc(x[1])+'</td><td data-label="Ders Kodu">'+esc(x[2])+'</td><td data-label="Ders Adı"> <span id="grd'+d+'_Label1Grd2_'+i+'" title="'+esc(title)+'" style="color:#3A3A3A;font-family:Open Sans;font-size:8pt;">'+esc(x[3])+'</span> </td><td data-label="Derslik">'+esc(x[4])+'</td><td data-label="Öğretim Elemanı">Gösterilmiyor</td></tr>';
+    });
+    cells.push(t+'</tbody></table>');
+  }
+  for(var i=0;i<cells.length;i+=2) html+='<tr><td>'+cells[i]+'</td><td>'+(cells[i+1]||'')+'</td></tr>';
+  document.getElementById('ttHost').innerHTML=html+'</tbody></table>';
+})();
+</script>
+<script>if(/[?&]dev=1/.test(location.search)){var s=document.createElement('script');s.src=(document.documentElement.getAttribute('data-root')||'..')+'/extension/dev/loader.js?v='+Date.now();document.body.appendChild(s);}</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="tr" data-root="../..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Akademik Takvim – DEMO</title>
+<link rel="stylesheet" href="../obs.css">
+</head>
+<body>
+<div class="page">
+  <div class="demo-note"><b>DEMO</b> – gerçek OBS değildir; kurgusal öğrenci.</div>
+  <div class="card"><div class="card-head">Akademik Takvim</div><div class="card-body"><label for="cmbDonemler">Dönem </label><select name="cmbDonemler" id="cmbDonemler"><option selected="selected" value="20262">2026-2027 Güz</option><option value="20261">2025-2026 Bahar</option></select> <button type="button" class="btn" id="btnExportICS">Takvimi Dışa Aktar</button></div></div>
+  <div class="scroll-x"><table class="ProlizMGrid" cellspacing="0" rules="all" border="1" id="grd" style="border-collapse:collapse"><tbody>
+    <tr><th scope="col">Takvim Adı</th><th scope="col">Başlangıç Tarihi</th><th scope="col">Bitiş Tarihi</th></tr>
+    <tr><td><span id="grd_lblAd_0">Ders Kayıt</span></td><td><span id="grd_lblBasTar_0">14.09.2026 09:00</span></td><td><span id="grd_lblBitTar_0">09.10.2026 17:00</span></td></tr>
+    <tr><td><span id="grd_lblAd_1">Danışman Onay</span></td><td><span id="grd_lblBasTar_1">14.09.2026 09:00</span></td><td><span id="grd_lblBitTar_1">09.10.2026 17:00</span></td></tr>
+    <tr><td><span id="grd_lblAd_2">Ders Ekle/Bırak</span></td><td><span id="grd_lblBasTar_2">21.09.2026 09:00</span></td><td><span id="grd_lblBitTar_2">09.10.2026 17:00</span></td></tr>
+    <tr><td><span id="grd_lblAd_3">Ara Sınav Not Giriş</span></td><td><span id="grd_lblBasTar_3">21.09.2026 08:00</span></td><td><span id="grd_lblBitTar_3">13.01.2027 23:59</span></td></tr>
+    <tr><td><span id="grd_lblAd_4">Yarıyıl Sınavı Not Giriş</span></td><td><span id="grd_lblBasTar_4">26.12.2026 08:00</span></td><td><span id="grd_lblBitTar_4">13.01.2027 23:59</span></td></tr>
+    <tr><td><span id="grd_lblAd_5">Yarıyıl Sınavı Notlarının ve Harf Notlarının Öğrenciye Yayınlanması</span></td><td><span id="grd_lblBasTar_5">13.01.2027 17:00</span></td><td><span id="grd_lblBitTar_5">13.01.2027 17:00</span></td></tr>
+    <tr><td><span id="grd_lblAd_6">Yeni Öğrenci Kayıt ve Ders Ekle/Bırak</span></td><td><span id="grd_lblBasTar_6">14.09.2026 09:00</span></td><td><span id="grd_lblBitTar_6">16.10.2026 17:00</span></td></tr>
+  </tbody></table></div>
+</div>
+<script>if(/[?&]dev=1/.test(location.search)){var s=document.createElement('script');s.src=(document.documentElement.getAttribute('data-root')||'..')+'/extension/dev/loader.js?v='+Date.now();document.body.appendChild(s);}</script>
+</body>
+</html>

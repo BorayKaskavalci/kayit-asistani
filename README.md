@@ -1,8 +1,21 @@
 # Kayıt Asistanı
 
-**OBS ders kaydı için akıllı yardımcı** - Yaşar Üniversitesi Makine Mühendisliği öğrencisi örneği üzerinden hazırlanmış, TR/EN dilli, tamamen statik (HTML + CSS + vanilla JS) bir ders kayıt yardımcısı. GenAI dersi dönem ödevidir.
+**OBS ders kaydı için akıllı yardımcı** - üniversitenin öğrenci bilgi sistemi **OBS'nin içinde** çalışan bir Chrome eklentisi ve onunla aynı kural motorunu kullanan, kurulum gerektirmeyen bir web planlayıcı. TR/EN dilli; GenAI dersi dönem ödevidir. Hocamızın isteği doğrultusunda hedef, **OBS'ye benzeyen ve kayıt sorunlarını doğrudan hedefleyen** bir çözümdür.
 
-> **Veri durumu özeti:** Müfredat, **ön koşullar** ve **2026-2027 Güz ders programı gerçektir** (Yaşar Üniv. Makine Mühendisliği). **Kontenjan simülasyondur** (OBS'de herkese açık değil) ve öğrenci **kurgusaldır**. Resmi OBS ile bağlantısı yoktur.
+İki ürün, tek motor (`extension/lib/kayit-core.js`):
+
+| | **1. Chrome eklentisi – "Kayıt Asistanı – OBS"** (ana ürün) | **2. Web uygulaması** (bağımsız planlayıcı) |
+|---|---|---|
+| Nerede çalışır | Gerçek OBS'nin (Proliz OİBS) içinde, sağda yan panel + OBS tablolarında işaretler (kayıt, devamsızlık, not listesi) | Tarayıcıda tek sayfa (`index.html`), GitHub Pages |
+| Veri | Öğrencinin **kendi OBS sayfalarından** (salt-okunur): ders programı, müfredat durumu, açılan dersler, ders kaydı; isteğe bağlı devamsızlık, not listesi, sınav ve akademik takvim | `data.js`: gerçek müfredat/ön koşul/ders programı + kurgusal öğrenci |
+| Kimin için | **Her öğrenci** kurup kendi hesabında kullanabilir (kişiye özel veri yok) | Sunum ve "kayıt öncesi deneme" için |
+| Ayrıntı | [`extension/README.md`](extension/README.md) | aşağıda |
+
+- **Eklentiyi indir:** [`extension.zip`](extension.zip) → `chrome://extensions` → Geliştirici modu → Paketlenmemiş öğe yükle (ayrıntı: [`extension/README.md`](extension/README.md)).
+- **Kurmadan dene (Demo OBS):** <https://boraykaskavalci.github.io/kayit-asistani/demo-obs/?dev=1> — gerçek OBS'nin sayfa yapısını taklit eden kurgusal bir kopya; eklentinin tamamı `?dev=1` ile sayfada çalışır.
+- **Web uygulaması:** <https://boraykaskavalci.github.io/kayit-asistani/>
+
+> **Veri durumu özeti:** Web uygulamasında müfredat, **ön koşullar** ve **2026-2027 Güz ders programı gerçektir** (Yaşar Üniv. Makine Mühendisliği). **Kontenjan simülasyondur** (OBS'de herkese açık değil) ve öğrenci **kurgusaldır**. Eklenti ise öğrencinin kendi OBS verisini yalnızca okur; OBS'ye istek atmaz, veriyi hiçbir yere göndermez.
 
 ## Problem
 
@@ -26,9 +39,25 @@ Kayıt günü gelmeden önce her şeyi hazırlatan bir yardımcı:
 
 ## Özellikler
 
+### Chrome eklentisi (OBS içinde)
+
+- **Otomatik veri toplama:** OBS'de açtığın sayfalar (Bölüm Ders Programı – her sınıf, Müfredat Durum, Açılan Bölüm Dersleri, Ders Kayıt) salt-okunur ayrıştırılır; Durum sekmesi neyin toplandığını ve eksikse hangi menüye gideceğini gösterir.
+- **Kayıt kontrolü + OBS tablosunda işaret:** çakışma (hangi ders, gün, saat), izinli tekrar dersi çakışması (m.29/4), ön koşul ihlali, ME 4910 özel şartı, geçilmiş dersin tekrarı, AKTS limiti (OBS'nin kendi limitinden), kayıtta olmayan F'li zorunlu ders; çakışan şube için çakışmayan şube önerisi. Sorunlu satırlar Ders Kayıt tablosunda renkli kenar ve rozetle işaretlenir.
+- **Alabileceklerim:** bu dönem açılanlar ∩ müfredat; önce tekrar edilmesi zorunlu dersler, alınabilenler, seçmeli adayları, kilitliler (nedeniyle).
+- **Planla:** çakışmasız kombinasyonlar, tercihler, mini haftalık ızgaralar, Plan A/B/C, "Dolu" ile anında yeniden planlama, kopyalanabilir kayıt günü listesi.
+- **Mezuniyet Yol Haritası:** dönem dönem en erken mezuniyet, kritik yol, "ya kalırsam?", GNO hedefi.
+- **Kayıt dışındaki OBS sorunları:**
+  - **Devamsızlık:** ders başına kullanılan / izin verilen saat, kalan hak ve "≈ N ders oturumu daha", NA riski uyarısı (Yönetmelik m.29(2)); OBS satırlarında rozet.
+  - **Not hesabı:** Not Listesi + herkese açık Bologna değerlendirme ağırlıkları → şu anki puan, sınıf ortalaması, hedef eşikler için **finalden gereken puan** (düzenlenebilir, "tahmini" etiketli); OBS kartında rozet.
+  - **Takvim (.ics):** haftalık dersler, hatırlatıcılı sınavlar ve akademik son tarihler tek dosyada telefona/takvime; Durum'da "Yaklaşan" geri sayım kartı.
+  - **Oturum uyarısı:** OBS oturumu 5 dk içinde kapanacakken bir kez uyarır (oturumu uzatmak için hiçbir şeye tıklamaz).
+- Gizlilik: yalnızca `storage` izni, ağ isteği yok, ad/numara okunmaz, .ics cihazda üretilir, "Verilerimi sil".
+
+### Web uygulaması
+
 - **1. Ders Seç & Program** - aranabilir/filtrelenebilir ders listesi, sepet, haftalık program (Pzt-Cum 08:40-18:40), kırmızı çakışma uyarısı ("ME 3310 ile ... Salı 13:40'ta çakışıyor"), dönem yük sınırı uyarısı, şubenin üzerine gelince programda önizleme.
 - **2. Ön Koşul & Kontenjan** - "Alabileceğim dersler", sepet kontrolü ve tek ders inceleme. Ön koşul sağlandı/sağlanmadı (eksik mi, başarısız mı), kontenjan çubuğu (dolu / az kaldı / müsait), alternatif şubeler, "bu dersi geçersen / kalırsan" ipuçları.
-- **3. Mezuniyet Takibi** - 240 AKTS ilerlemesi, zorunlu dersler, 4 alan + 2 kısıtlı seçmeli, tekrar edilecek dersler, GNO ≥ 2,00 koşulu, "bu dönem alırsan" projeksiyonu.
+- **3. Mezuniyet Takibi** - **Mezuniyet Yol Haritası** (dönem dönem en erken mezuniyet planı, kritik yol, "ya kalırsam?" senaryosu, beklenen not ve GNO 2,00 hedefi, plan doğrulaması), 240 AKTS ilerlemesi, zorunlu dersler, seçmeli yuvaları, tekrar edilecek dersler, GNO ≥ 2,00 koşulu, "bu dönem alırsan" projeksiyonu.
 - **4. Danışman Onayı** - Ders seçimi -> Kontrol -> Danışmana gönder -> Onay bekleniyor -> Onaylandı/Reddedildi (simüle), engelleyen sorunların kontrol listesi, "Danışmana mesaj kopyala".
 - **5. Kayıt Günü Planı** - yukarıda anlatıldı.
 - **Kurallar** paneli (başlıktaki "Kurallar"): yönetmelik özeti ve kaynak bağlantısı.
@@ -69,6 +98,18 @@ YU Sync (yu-sync.com) gibi öğrenci yapımı **ders programı planlayıcıları
 
 Bahar derslerinden Güz çizelgesinde olmayanlar "bu dönem açılmıyor" olarak görünür. Tüm veri tek dosyada (`data.js`) durur; şema dosyanın başındadır. Limit birimi (`rules.limit.unit`: `"ects"` veya `"credits"`) ve değerleri de oradadır.
 
+## Nasıl yapıldı
+
+- **Claude Code ile** (Anthropic'in kodlama ajanı) geliştirildi: gereksinim analizi, veri toplama, kural motoru, arayüzler, testler ve belgeler ajanla birlikte, adım adım doğrulanarak yazıldı.
+- **Gerçek veri, hocamızın önerdiği gibi tarayıcı üzerinden toplandı** (Claude in Chrome / Chrome MCP ile, öğrencinin kendi oturumunda, yalnızca okuma):
+  - **OBS Bologna** sayfasından 2025-2026 Makina Mühendisliği müfredatı (kod, ad, AKTS, yarıyıl, seçmeli yuvaları),
+  - **bölümün ön koşul diyagramından** gerçek ön koşullar ve ME 4910 özel şartı,
+  - bölümün yayımladığı **resmi ders programı xlsx** dosyasından 2026-2027 Güz şube/gün/saat/derslik bilgisi,
+  - herkese açık **Bologna ders sayfalarının "Değerlendirme Ölçütleri"** tablolarından 259 dersin sınav ağırlıkları (not hesabı için),
+  - **OBS sayfa yapısı analizi:** Bölüm Ders Programı, Müfredat Durum, Açılan Bölüm Dersleri ve Ders Kayıt sayfalarının DOM yapısı (çerçeveler, tablo/kimlik seçicileri) incelendi ve kişisel veri içermeyen teknik not olarak `research/obs/OBS-YAPI.md`'ye yazıldı. Eklentinin ayrıştırıcıları ve `demo-obs/` kopyası bu nota dayanır.
+- Kurallar Yaşar Üniversitesi yönetmeliğinden (mevzuat.gov.tr) okunup motora işlendi; motor web uygulaması ve eklenti arasında **tek dosya** olarak paylaşılır.
+- Doğrulama: tüm JS dosyaları sözdizimi denetiminden geçirildi; eklenti demo OBS'de uçtan uca (veri toplama → kontrol → plan → yol haritası, TR/EN, dar ekran) denendi; `extension/tests/test.html` birim testleri.
+
 ## Nasıl çalıştırılır
 
 Derleme yok, bağımlılık yok.
@@ -86,6 +127,10 @@ Derleme yok, bağımlılık yok.
 | `app.js` | Uygulama mantığı (çakışma, ön koşul, çözücü, sekmeler) |
 | `data.js` | Katalog, kurallar, öğrenci profili, grup üyeleri |
 | `i18n.js` | TR/EN arayüz metinleri |
+| `extension/` | Chrome eklentisi (MV3) - ayrıntı: `extension/README.md`; ortak motor `extension/lib/kayit-core.js` |
+| `extension.zip` | Kurulabilir eklenti paketi (`python3 tools/build_extension.py` üretir) |
+| `demo-obs/` | Eklenti demosu için kurgusal OBS kopyası (`?dev=1` ile eklenti sayfada çalışır) |
+| `tools/` | `build_extension.py` (paketleme), `dev_server.py` (önbelleksiz yerel sunucu) |
 
 ## Ekran açıklaması
 
@@ -97,7 +142,7 @@ Derleme yok, bağımlılık yok.
 
 ## İleride
 
-- Gerçek OBS entegrasyonu (ders programı, kontenjan ve transkript verisini canlı çekme; kayıt gününde otomatik uyarı).
+- OBS entegrasyonu eklentiyle yapıldı (salt-okunur; kayıt, devamsızlık, not hesabı, takvim). Sırada: kayıt açıkken kullanılan ders seçim sayfasının desteklenmesi, kontenjan bilgisinin (OBS gösteriyorsa) okunması.
 - Resmi müfredat görselinden/OBS ders bilgi paketlerinden **doğrulanmış ön koşul** ve seçmeli havuzu.
 - Ders/hoca değerlendirmeleri ve iş yükü bilgisi ile program önerisi; yapay zekâ destekli danışman sohbeti.
 - Danışmana gerçek e-posta/bildirim, birden çok bölüm ve çift anadal desteği.

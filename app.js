@@ -5,6 +5,8 @@
   "use strict";
 
   var D = window.KAYIT_DATA, I = window.KAYIT_I18N, R = D.rules, RL = R.limit;
+  /* Ortak kural motoru (Chrome eklentisiyle paylaşılır): extension/lib/kayit-core.js */
+  var K = window.KayitCore, RV = window.KayitRoadmapView;
   var DAYS = R.timetable.days;
   var KEY = "kayitAsistani.v3", LANG_KEY = "kayitAsistani.lang";
   var TABS = ["plan", "status", "grad", "flow", "reg"];
@@ -113,6 +115,7 @@
   function defaultState() {
     return { cart: [], fullIds: [], scenario: "", introDismissed: false, limitOverride: null, tab: "plan", sv: "elig", regDate: "",
       prefs: { days: true, early: false, gaps: true, free: "" },
+      rm: { expected: 2, fail: {}, mode: "" },
       flow: { status: "draft", studentNote: "", advisorNote: "", submittedAt: null, decidedAt: null } };
   }
   var isFresh = false;
@@ -133,6 +136,11 @@
         if (typeof p.regDate === "string") s.regDate = p.regDate;
         if (p.prefs && typeof p.prefs === "object") for (var k in s.prefs) if (p.prefs[k] !== undefined) s.prefs[k] = p.prefs[k];
         if (p.flow && typeof p.flow === "object") for (var f in s.flow) if (p.flow[f] !== undefined) s.flow[f] = p.flow[f];
+        if (p.rm && typeof p.rm === "object") {
+          if (typeof p.rm.expected === "number") s.rm.expected = p.rm.expected;
+          if (p.rm.fail && typeof p.rm.fail === "object") s.rm.fail = p.rm.fail;
+          if (p.rm.mode === "suggest" || p.rm.mode === "cart") s.rm.mode = p.rm.mode;
+        }
       }
     } catch (e) { /* localStorage yok/engelli */ }
     return s;
@@ -175,29 +183,14 @@
   }
 
   /* ---------- çakışma (m.29: tekrar dersi istisnası dahil) ---------- */
-  function overlapsOf(a, b) {
-    var out = [];
-    a.slots.forEach(function (x) {
-      b.slots.forEach(function (y) {
-        if (x.day === y.day && x.start < y.end && y.start < x.end) out.push({ day: x.day, start: Math.max(x.start, y.start), end: Math.min(x.end, y.end) });
-      });
-    });
-    return out;
-  }
+  function overlapsOf(a, b) { return K.overlaps(a, b); }
   /* soft: F/U'lu tekrar dersi ile ilk kez alınan ders arasındaki çakışma (izinli) */
   function isSoft(a, b) {
     return (isFRetake(a.code) && isFirstTime(b.code)) || (isFRetake(b.code) && isFirstTime(a.code));
   }
   function pairHard(a, b) { return overlapsOf(a, b).length > 0 && !isSoft(a, b); }
   function pairSoft(a, b) { return overlapsOf(a, b).length > 0 && isSoft(a, b); }
-  function findConflicts(secs) {
-    var res = [];
-    for (var i = 0; i < secs.length; i++) for (var j = i + 1; j < secs.length; j++) {
-      var o = overlapsOf(secs[i], secs[j]);
-      if (o.length) res.push({ a: secs[i], b: secs[j], overlaps: o, soft: isSoft(secs[i], secs[j]) });
-    }
-    return res;
-  }
+  function findConflicts(secs) { return K.findConflicts(secs, isSoft); }
   function conflictMessage(cf) {
     var o = cf.overlaps[0];
     var m = t(cf.soft ? "conflict.soft" : "conflict.hard", { a: cf.a.code, b: cf.b.code, day: dayLong(o.day), time: atTime(o.start) });
@@ -559,51 +552,11 @@
   }
 
   /* ---- çözücü: tüm çakışmasız kombinasyonlar + tercihler ---- */
-  function enumerate(options) {
-    var order = options.map(function (_, i) { return i; }).sort(function (a, b) { return options[a].length - options[b].length; });
-    var sols = [], nodes = 0, chosen = [];
-    (function bt(k) {
-      if (sols.length >= MAX_SOL || nodes > NODE_CAP) return;
-      nodes++;
-      if (k === order.length) { sols.push(chosen.slice()); return; }
-      var opts = options[order[k]];
-      for (var i = 0; i < opts.length; i++) {
-        var s = opts[i], ok = true;
-        for (var j = 0; j < chosen.length; j++) if (pairHard(chosen[j], s)) { ok = false; break; }
-        if (ok) { chosen.push(s); bt(k + 1); chosen.pop(); }
-      }
-    })(0);
-    return { sols: sols, capped: sols.length >= MAX_SOL || nodes > NODE_CAP };
-  }
+  function enumerate(options) { return K.enumerate(options, pairHard, { maxSol: MAX_SOL, nodeCap: NODE_CAP }); }
   function comboStats(combo) {
-    var gs = toMin(R.timetable.start), days = {}, gap = 0, early = 0, free = 0, fill = 0, softN = 0, earliest = 99999;
-    combo.forEach(function (s) {
-      fill += fillRatio(s);
-      s.slots.forEach(function (sl) {
-        (days[sl.day] = days[sl.day] || []).push(sl);
-        if (sl.start <= gs) early++;
-        if (sl.start < earliest) earliest = sl.start;
-        if (state.prefs.free && sl.day === state.prefs.free) free++;
-      });
-    });
-    Object.keys(days).forEach(function (d) {
-      var a = days[d].sort(function (x, y) { return x.start - y.start; });
-      for (var i = 1; i < a.length; i++) if (a[i].start > a[i - 1].end) gap += a[i].start - a[i - 1].end;
-    });
-    for (var i = 0; i < combo.length; i++) for (var j = i + 1; j < combo.length; j++) if (pairSoft(combo[i], combo[j])) softN++;
-    return { days: Object.keys(days).length, gap: gap, early: early, free: free, fill: fill, soft: softN, earliest: earliest === 99999 ? null : earliest };
+    return K.comboStats(combo, { gridStart: toMin(R.timetable.start), freeDay: state.prefs.free, fillRatio: fillRatio, pairSoft: pairSoft });
   }
-  function rank(sols) {
-    var p = state.prefs;
-    var list = sols.map(function (combo) {
-      var st = comboStats(combo);
-      var score = st.days * (p.days ? 150 : 15) + st.gap * (p.gaps ? 1 : 0.1) + st.early * (p.early ? 1000 : 0) +
-        st.free * (p.free ? 1000 : 0) + st.soft * 500 + st.fill * 5;
-      return { combo: combo.slice().sort(function (a, b) { return a.code < b.code ? -1 : 1; }), stats: st, score: score };
-    });
-    list.sort(function (a, b) { return a.score - b.score; });
-    return list;
-  }
+  function rank(sols) { return K.rank(sols, comboStats, state.prefs); }
   function autoSchedule() {
     var cur = cartSections();
     if (!cur.length) { autoProposal = { error: "auto.errEmpty" }; renderAuto(); return; }
@@ -758,6 +711,38 @@
     var a = Math.min(100, earned / total * 100), b = Math.min(100 - a, cart / total * 100);
     return '<div class="progress stack" role="img" aria-label="' + esc(t("grad.barAria", { e: earned, c: cart, t: total })) + '"><span class="seg-done" style="width:' + a + '%"></span><span class="seg-cart" style="width:' + b + '%"></span></div>';
   }
+  /* ---- Mezuniyet yol haritası (ortak motor: KayitCore.planRoadmap) ---- */
+  function rmModel() {
+    var kn = K.knowledgeFromData(D), items = K.itemsFromKnowledge(kn), rec = {}, slotsBy = {}, W = 0;
+    items.forEach(function (it) {
+      if (it.slot) { (slotsBy[it.group] = slotsBy[it.group] || []).push(it); return; }
+      var a = lastAttempt(it.code); if (!a) return;
+      rec[it.code] = { state: passed[it.code] ? "passed" : (R.failGrades.indexOf(a.grade) >= 0 ? "failed" : "ongoing"), grade: a.grade, term: a.term };
+    });
+    D.courses.forEach(function (c) {
+      if (c.type !== "seçmeli" || !passed[c.code]) return;
+      var sl = (slotsBy[c.cat] || []).shift();
+      if (sl) rec[sl.code] = { state: "passed", grade: gradeOf(c.code), takenCode: c.code };
+    });
+    Object.keys(attempts).forEach(function (code) { if (R.gradePoints[gradeOf(code)] !== undefined) W += ectsOf(code); });
+    return K.createModel({ items: items, record: rec, gpa: gpa(), gradedEcts: W, earnedEcts: earnedEcts(), completedSemesters: D.student.completedSemesters,
+      rules: { statuses: RL.statuses, statusFromCompletedSemesters: RL.statusFromCompletedSemesters, firstYearMax: RL.firstYearMax, totalEcts: R.graduation.totalEcts, minGpa: R.graduation.minGpa },
+      special: R.specialPrereqs || {}, project: kn.project, limitOverride: state.limitOverride });
+  }
+  function rmMode() { return state.rm.mode || (state.cart.length ? "cart" : "suggest"); }
+  function roadmapHtml() {
+    if (!K || !RV) return "";
+    var M = rmModel(), offered = {}, mode = rmMode();
+    D.courses.forEach(function (c) { if (isOffered(c)) offered[c.code] = true; });
+    var codes = []; cartSections().forEach(function (s) { if (codes.indexOf(s.code) < 0) codes.push(s.code); });
+    var opts = { start: K.parseTerm(D.meta.term.tr) || { year: 2026, season: "G" }, offeredNow: offered, expected: state.rm.expected,
+      failNow: state.rm.fail, fixedTerm0: mode === "cart" && codes.length ? codes : null };
+    var B = K.roadmapBundle(M, opts);
+    var nameOf = function (code) { var it = M.item(code); return courseName(code) || (it ? (LANG === "en" ? it.nameEn : it.name) : ""); };
+    return '<div class="card roadmap-card"><h3>' + esc(t("rm.title")) + '</h3><p class="muted small">' + esc(t("rm.intro")) + '</p>' +
+      RV.render(B, { t: t, lang: LANG, num2: num2, name: nameOf, M: M, expected: state.rm.expected, mode: mode,
+        modes: [{ v: "suggest", label: t("rm.mode.suggest") }, { v: "cart", label: t("rm.mode.cart") }] }) + '</div>';
+  }
   function renderGrad() {
     var g = gradStats(), st = standing(), gp = gpa(), min = R.graduation.minGpa;
     var doneCount = g.rows.filter(function (r) { return r.state === "done"; }).length;
@@ -769,6 +754,7 @@
       '<div class="card stat ' + (gp < min ? "stat-bad" : "") + '"><span class="stat-n">' + num2(gp) + '</span><span class="muted">' + esc(t("grad.statGpa", { s: L(st.label) })) + '</span></div>' +
       '<div class="card stat"><span class="stat-n">' + doneCount + '<small> / ' + g.rows.length + '</small></span><span class="muted">' + esc(t("grad.statReq")) + '</span></div>' +
       '<div class="card stat ' + (g.failed.length ? "stat-bad" : "") + '"><span class="stat-n">' + g.failed.length + '</span><span class="muted">' + esc(t("grad.statFailed")) + '</span></div></div>';
+    html += roadmapHtml();
     html += '<div class="card"><h3>' + esc(t("grad.overall")) + '</h3>' + stackBar(g.earned, g.cart, g.total) +
       '<div class="legend"><span><i class="lg lg-done"></i> ' + esc(t("grad.lgDone", { n: g.earned })) + '</span><span><i class="lg lg-cartseg"></i> ' + esc(t("grad.lgCart", { n: g.cart })) + '</span><span><i class="lg lg-rest"></i> ' + esc(t("grad.lgRest", { n: g.remainingAfter })) + '</span></div>' +
       '<p class="small ' + (gp < min ? "alert bad" : "muted") + '">' + esc(t(gp < min ? "grad.gpaBad" : "grad.gpaOk", { g: num2(gp), m: num2(min), tot: R.graduation.totalEcts })) + '</p></div>';
@@ -874,22 +860,10 @@
         x.sections.some(function (s) { return hasSpace(s) && !others.some(function (o) { return pairHard(s, o); }); });
     }).slice(0, 3);
   }
-  /* Plan B/C için seçenekler: aynı dersin, daha önce kullanılmamış ve yeri olan şubeleri */
-  function planOptions(A, excl, skipCode) {
-    return A.filter(function (s) { return s.code !== skipCode; }).map(function (s) {
-      var pool = byCode[s.code].sections.filter(function (x) { return hasSpace(x) && excl.indexOf(x.id) < 0; });
-      return pool.concat([s]);   /* uygun yedek yoksa dersi Plan A'daki şubesiyle tut */
-    });
-  }
-  /* en çok yeni şube içeren, çakışmasız ve tercihlere en uygun kombinasyon */
-  function bestPlan(A, excl, skipCode) {
-    var ranked = rank(enumerate(planOptions(A, excl, skipCode)).sols), best = null;
-    for (var i = 0; i < ranked.length; i++) {
-      var diff = ranked[i].combo.filter(function (x) { return excl.indexOf(x.id) < 0; });
-      if (diff.length && (!best || diff.length > best.diff.length)) best = { r: ranked[i], diff: diff };
-    }
-    return best;
-  }
+  /* Plan B/C (ortak motor): aynı dersin daha önce kullanılmamış ve yeri olan şubeleriyle en çok yeni şube içeren kombinasyon */
+  var planEnv = { sectionsOf: function (code) { return byCode[code].sections; }, hasSpace: function (s) { return hasSpace(s); },
+    pairHard: function (a, b) { return pairHard(a, b); }, rank: function (sols) { return rank(sols); } };
+  function bestPlan(A, excl, skipCode) { return K.bestPlan(A, excl, skipCode, planEnv); }
   /* Yedek plan neden üretilemedi? Engelleyen dersleri ve somut çözümleri bul */
   function diagnose(A, excl, key) {
     var blocked = [], single = [], drops = [];
@@ -1127,6 +1101,11 @@
       case "add-retakes": addRetakes(); break;
       case "intro-close": state.introDismissed = true; save(); renderIntro(); break;
       case "goto-plan": setTab("plan"); break;
+      case "rm-fail": {
+        var fc = el.getAttribute("data-code");
+        if (state.rm.fail[fc]) delete state.rm.fail[fc]; else state.rm.fail[fc] = true;
+        save(); renderGrad(); break;
+      }
       case "clear-cart": if (!state.cart.length) { toast(t("toast.cartEmpty")); break; } state.cart = []; afterCartChange(t("toast.cleared")); break;
       case "clear-filters":
         $("fQ").value = ""; $("fType").value = ""; $("fSem").value = "";
@@ -1192,6 +1171,9 @@
   });
   document.addEventListener("change", function (e) {
     if (e.target.id === "regDate") { state.regDate = e.target.value; save(); updateCountdown(); }
+    var rmk = e.target.getAttribute && e.target.getAttribute("data-rm");
+    if (rmk === "grade") { state.rm.expected = parseFloat(e.target.value) || 2; save(); renderGrad(); }
+    if (rmk === "mode") { state.rm.mode = e.target.value; state.rm.fail = {}; save(); renderGrad(); }
   });
   $("cartPill").addEventListener("click", function () { setTab("plan"); });
   var tabsRow = document.querySelector(".tabs-row");

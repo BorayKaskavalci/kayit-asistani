@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kayıt Asistanı – eklenti testleri</title>
+<style>
+body{font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:16px;color:#1b2033;background:#f5f6fa}
+h1{font-size:18px;margin:0 0 4px}#sum{font-weight:700;font-size:16px;margin:8px 0 12px}
+.pass{color:#1a7f4b}.fail{color:#c92a2a}
+ol{background:#fff;border:1px solid #dfe3ee;border-radius:10px;padding:10px 10px 10px 36px}
+li{margin:2px 0}li small{color:#5f6783}
+iframe{position:absolute;left:-9999px;width:1024px;height:700px;border:0}
+</style>
+</head>
+<body>
+<h1>Kayıt Asistanı – eklenti birim testleri</h1>
+<p>Ayrıştırıcılar demo OBS sayfaları üzerinde (gizli iframe), çekirdek ve model saf veriyle sınanır. Ağ isteği: yalnızca aynı sunucudaki demo sayfaları.</p>
+<div id="sum">Çalışıyor…</div>
+<ol id="out"></ol>
+<script src="../lib/kayit-core.js"></script>
+<script src="../lib/obs-parsers.js"></script>
+<script src="../lib/obs-parsers-more.js"></script>
+<script src="../lib/data.js"></script>
+<script src="../lib/weights.js"></script>
+<script src="../lib/i18n.js"></script>
+<script src="../lib/panel-i18n.js"></script>
+<script src="../lib/roadmap-view.js"></script>
+<script src="../lib/ka-model.js"></script>
+<script src="../lib/ka-more.js"></script>
+<script src="../lib/ics.js"></script>
+<script src="../lib/panel.js"></script>
+<script src="../lib/bg-core.js"></script>
+<script>
+(function () {
+  "use strict";
+  var K = KayitCore, OBS = KayitOBS, X = KayitExt, S = KAStore;
+  var pass = 0, fail = 0, out = document.getElementById("out");
+  function log(ok, name, detail) {
+    var li = document.createElement("li");
+    li.className = ok ? "pass" : "fail";
+    li.innerHTML = (ok ? "✓ " : "✗ ") + name.replace(/</g, "&lt;") + (detail ? " <small>" + String(detail).replace(/</g, "&lt;") + "</small>" : "");
+    out.appendChild(li);
+    if (ok) pass++; else fail++;
+  }
+  function ok(cond, name, detail) { log(!!cond, name, cond ? "" : detail); }
+  function eq(a, b, name) { var A = JSON.stringify(a), B = JSON.stringify(b); log(A === B, name, A === B ? "" : "beklenen " + B + ", gelen " + A); }
+  function sec(code, no, slots) { return { id: code + "#" + no, code: code, no: no, slots: slots.map(function (s) { var p = s.split(" "); var h = K.parseHourRange(p[1]); return { day: p[0], start: h.start, end: h.end, room: "" }; }) }; }
+
+  /* ---------- 1) buildSections: gerçek OBS satırları (research/obs/obs-bolum-ders-programi.json, 2. sınıf) ---------- */
+  var FIX = [["Pazartesi", "08:40-09:30", "ENGR 2120(1)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Pazartesi", "09:40-10:30", "ENGR 2120(1)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Pazartesi", "10:40-11:30", "ENGR 2120(2)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Pazartesi", "11:40-12:30", "ENGR 2120(2)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Pazartesi", "12:40-13:30", "ENGR 2120(3)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "T(-2 B14)[39]"], ["Pazartesi", "13:40-14:30", "ENGR 2120(3)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "T(-2 B14)[39]"], ["Pazartesi", "13:40-14:30", "ME 2210(1)", "MÜHENDİSLİK MEKANİĞİ I", "M621[88]"], ["Pazartesi", "14:40-15:30", "ENGR 2120(3)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "T(-2 B14)[39]"], ["Pazartesi", "14:40-15:30", "ME 2210(1)", "MÜHENDİSLİK MEKANİĞİ I", "M621[88]"], ["Pazartesi", "15:40-16:30", "ENGR 2120(3)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "T(-2 B14)[39]"], ["Salı", "08:40-09:30", "MATH 2230(1)", "MÜHENDİSLİKTE HESAPLAMA YÖNTEMLERİ", "M216[82]"], ["Salı", "09:40-10:30", "MATH 2230(1)", "MÜHENDİSLİKTE HESAPLAMA YÖNTEMLERİ", "M216[82]"], ["Çarşamba", "08:40-09:30", "ENGR 2120(2)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Çarşamba", "09:40-10:30", "ENGR 2120(2)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Çarşamba", "10:40-11:30", "ENGR 2120(1)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Çarşamba", "11:40-12:30", "ENGR 2120(1)", "BİLGİSAYAR DESTEKLİ MODELLEMEYE GİRİŞ", "M434[60]"], ["Perşembe", "10:40-11:30", "ME 2210(2)", "MÜHENDİSLİK MEKANİĞİ I", "M212[87]"], ["Perşembe", "11:40-12:30", "ME 2210(2)", "MÜHENDİSLİK MEKANİĞİ I", "M212[87]"], ["Cuma", "08:40-09:30", "ME 2210(1)", "MÜHENDİSLİK MEKANİĞİ I", "M113[82]"], ["Cuma", "09:40-10:30", "ME 2210(1)", "MÜHENDİSLİK MEKANİĞİ I", "M113[82]"], ["Cuma", "10:40-11:30", "MATH 2230(1)", "MÜHENDİSLİKTE HESAPLAMA YÖNTEMLERİ", "T(-1 B10)[89]"], ["Cuma", "11:40-12:30", "MATH 2230(1)", "MÜHENDİSLİKTE HESAPLAMA YÖNTEMLERİ", "T(-1 B10)[89]"], ["Cuma", "11:40-12:30", "ME 2210(2)", "MÜHENDİSLİK MEKANİĞİ I", "M212[87]"], ["Cuma", "12:40-13:30", "ME 2210(2)", "MÜHENDİSLİK MEKANİĞİ I", "M212[87]"]];
+  function rowsOf(list) {
+    return list.map(function (r) {
+      var cs = K.parseCodeSec(r[2]), h = K.parseHourRange(r[1]), rm = /^(.*?)\s*\[(\d+)\]\s*$/.exec(r[4]);
+      return { day: K.dayShort(r[0]), start: h.start, end: h.end, code: cs.code, no: cs.no, name: r[3], room: rm ? rm[1] : r[4], cap: rm ? +rm[2] : 0 };
+    });
+  }
+  (function () {
+    var secs = K.buildSections(rowsOf(FIX)), by = {};
+    secs.forEach(function (s) { by[s.id] = s; });
+    eq(secs.length, 6, "buildSections: 24 saatlik satır -> 6 şube (ENGR 2120 x3, ME 2210 x2, MATH 2230 x1)");
+    eq(by["MATH 2230#1"].slots.map(function (s) { return s.day + " " + K.fmt(s.start) + "-" + K.fmt(s.end); }), ["Sal 08:40-10:30", "Cum 10:40-12:30"], "buildSections: MATH 2230(1) ardışık saatler blok olur");
+    eq(by["ENGR 2120#3"].slots.map(function (s) { return s.day + " " + K.fmt(s.start) + "-" + K.fmt(s.end); }), ["Pzt 12:40-16:30"], "buildSections: ENGR 2120(3) 4 saat tek blok (10 dk teneffüs)");
+    eq(by["ME 2210#1"].cap, 88, "buildSections: derslik kapasitesi (en büyük) korunur");
+    /* mergeTimetable: aynı şube iki sınıf sayfasında -> tek şube */
+    var data = X.emptyData(), now = Date.now();
+    data = S.merge(data, "timetable", { term: "2026-2027 Güz", program: "MAKİNE MÜHENDİSLİĞİ", classYear: "2.Sınıf", sections: secs, hourRows: 24, courses: 3 }, now).data;
+    data = S.merge(data, "timetable", { term: "2026-2027 Güz", program: "MAKİNE MÜHENDİSLİĞİ", classYear: "3.Sınıf", sections: [by["MATH 2230#1"]], hourRows: 4, courses: 1 }, now + 1).data;
+    var tt = X.mergeTimetable(data, "2026-2027 Güz");
+    eq(tt.sections.length, 6, "mergeTimetable: iki sınıfta görünen MATH 2230(1) tek kez sayılır");
+    eq(tt.byId["MATH 2230#1"].slots.length, 2, "mergeTimetable: tekilleştirilen şubenin saatleri bozulmaz");
+    eq(tt.years, ["2.Sınıf", "3.Sınıf"], "mergeTimetable: toplanan sınıflar");
+    var old = S.merge(data, "timetable", { term: "2025-2026 Bahar", program: "MAKİNE MÜHENDİSLİĞİ", classYear: "1.Sınıf", sections: [sec("OLD 1000", 1, ["Pzt 08:40-10:30"])], hourRows: 2, courses: 1 }, now + 2).data;
+    eq(X.currentTerm(old), "2026-2027 Güz", "currentTerm: en yeni dönem seçilir (eski dönem sayfası karışmaz)");
+    eq(X.mergeTimetable(old, X.currentTerm(old)).sections.length, 6, "mergeTimetable: başka dönemin şubeleri alınmaz");
+  })();
+
+  /* ---------- 2) checkRegistration: sentetik durum ---------- */
+  (function () {
+    var M = K.createModel({
+      items: [
+        { code: "AAA 1000", ects: 6, semester: 1, compulsory: true, prereq: [] },
+        { code: "BBB 2000", ects: 6, semester: 2, compulsory: true, prereq: ["AAA 1000"] },
+        { code: "CCC 3000", ects: 6, semester: 3, compulsory: true, prereq: [] },
+        { code: "DDD 4000", ects: 8, semester: 7, compulsory: true, prereq: [] },
+        { code: "EEE 1000", ects: 5, semester: 1, compulsory: true, prereq: [] },
+        { code: "FFF 1000", ects: 5, semester: 1, compulsory: true, prereq: [] }
+      ],
+      record: { "AAA 1000": { state: "failed", grade: "F" }, "FFF 1000": { state: "failed", grade: "F" }, "EEE 1000": { state: "passed", grade: "B" } },
+      gpa: 1.5, earnedEcts: 5, completedSemesters: 4, special: { "DDD 4000": { minEcts: 150, requiredSemesters: [1, 2] } }
+    });
+    var secs = { "AAA 1000#1": sec("AAA 1000", 1, ["Pzt 08:40-10:30"]), "BBB 2000#1": sec("BBB 2000", 1, ["Sal 08:40-10:30"]),
+      "CCC 3000#1": sec("CCC 3000", 1, ["Pzt 09:40-11:30"]), "DDD 4000#1": sec("DDD 4000", 1, ["Sal 09:40-10:30"]), "EEE 1000#1": sec("EEE 1000", 1, ["Çar 08:40-10:30"]),
+      "FFF 1000#1": sec("FFF 1000", 1, ["Per 08:40-10:30"]) };
+    var rows = [{ code: "AAA 1000", no: 1, ects: 6, alis: "Alttan" }, { code: "BBB 2000", no: 1, ects: 6, alis: "Zorunlu" }, { code: "CCC 3000", no: 1, ects: 6, alis: "Zorunlu" },
+      { code: "DDD 4000", no: 1, ects: 8, alis: "Zorunlu" }, { code: "EEE 1000", no: 1, ects: 5, alis: "Zorunlu" }];
+    var r = K.checkRegistration(M, rows, { sectionFor: function (c, n) { return secs[c + "#" + n] || null; }, offeredCodes: { "FFF 1000": true }, limit: 30 });
+    function types(i) { return r.rows[i].issues.map(function (x) { return x.type; }).sort(); }
+    eq(types(0), ["conflictSoft"], "checkRegistration: F'li tekrar dersi ilk kez alınan dersle izinli çakışır (m.29/4)");
+    eq(r.rows[0].level, "warn", "checkRegistration: izinli çakışma uyarı düzeyinde");
+    eq(types(1), ["conflict", "prereq"], "checkRegistration: ilk kez alınan iki ders sert çakışır + ön koşul (F) ihlali");
+    eq(r.rows[1].issues.filter(function (x) { return x.type === "prereq"; })[0].p.state, "failed", "checkRegistration: ön koşul durumu 'başarısız'");
+    ok(r.rows[3].issues.some(function (x) { return x.type === "special" && x.p.e === 5 && x.p.m === 150; }), "checkRegistration: özel şart (AKTS + yarıyıl zorunluları) ihlali");
+    eq(types(4), ["repeat"], "checkRegistration: geçilmiş ders tekrar alınıyor uyarısı");
+    ok(r.global.some(function (g) { return g.type === "limit" && g.total === 31 && g.limit === 30; }), "checkRegistration: AKTS limiti aşımı (31/30)");
+    ok(r.global.some(function (g) { return g.type === "missingRetake" && g.code === "FFF 1000"; }), "checkRegistration: açılan ama kayıtta olmayan F'li zorunlu ders");
+    eq(r.errors, 4, "checkRegistration: hata sayısı (2 ders + 2 genel)");
+  })();
+
+  /* ---------- 3) ayrıştırıcılar demo OBS sayfaları üzerinde + uçtan uca model ---------- */
+  function frame(src) {
+    return new Promise(function (resolve, reject) {
+      var f = document.createElement("iframe");
+      f.src = src;
+      f.onload = function () { setTimeout(function () { resolve(f.contentDocument); }, 50); };
+      f.onerror = reject;
+      document.body.appendChild(f);
+      setTimeout(function () { reject(new Error("zaman aşımı: " + src)); }, 15000);
+    });
+  }
+  var base = "../../demo-obs/std/";
+  var pages = { t1: "std_time_table_dep.html?sinif=1", t2: "std_time_table_dep.html?sinif=2", t3: "std_time_table_dep.html?sinif=3", t4: "std_time_table_dep.html?sinif=4",
+    cur: "ogrenci_mufredat_ders.html", off: "program_dersleri.html", reg: "ders_kayit_ozet.html",
+    att: "ders_yoklama_durum.html", grd: "not_listesi_op.html", ex: "sinav_takvimi.html", my: "std_time_table.html", ac: "st_akademik_takvim.html" };
+  var keys = Object.keys(pages);
+  Promise.all(keys.map(function (k) { return frame(base + pages[k]); })).then(function (docs) {
+    var D = {}; keys.forEach(function (k, i) { D[k] = docs[i]; });
+    eq([OBS.detect(D.t2), OBS.detect(D.cur), OBS.detect(D.off), OBS.detect(D.reg)], ["timetable", "curriculum", "offered", "registration"], "detect: dört OBS sayfa türü DOM'dan tanınır");
+    eq(OBS.detect(document), null, "detect: OBS olmayan sayfa tanınmaz");
+    var t2 = OBS.parse(D.t2);
+    eq([t2.term, t2.program, t2.classYear], ["2026-2027 Güz", "MAKİNE MÜHENDİSLİĞİ", "2.Sınıf"], "parseTimetable: dönem / program / sınıf seçicileri");
+    var m2230 = t2.sections.filter(function (s) { return s.id === "MATH 2230#1"; })[0];
+    eq(m2230 && m2230.slots.map(function (s) { return s.day + " " + K.fmt(s.start) + "-" + K.fmt(s.end); }), ["Sal 08:40-10:30", "Cum 10:40-12:30"], "parseTimetable: grd0..grd6 satırlarından MATH 2230(1) blokları");
+    var cur = OBS.parse(D.cur);
+    eq([cur.gpa, cur.earnedEcts, cur.classYear, cur.items.length], [1.77, 101, 3, 51], "parseCurriculum: GNO, başarılı AKTS, sınıf, satır sayısı");
+    var e1115 = cur.items.filter(function (i) { return i.code === "ENGR 1115"; })[0];
+    eq([e1115.state, e1115.taken.code, e1115.taken.grade, e1115.semester], ["passed", "SE 1115", "B-", 1], "parseCurriculum: eşdeğer ders (SE 1115 -> ENGR 1115), not ve yarıyıl");
+    eq(cur.items.filter(function (i) { return i.code === "MATH 2230"; })[0].state, "failed", "parseCurriculum: F notu = başarısız");
+    var off = OBS.parse(D.off);
+    eq(off.sections.filter(function (s) { return s.code === "ME 4910"; }).length, 8, "parseOffered: ME 4910 için 8 şube");
+    var reg = OBS.parse(D.reg);
+    eq([reg.rows.length, reg.totalEcts, reg.limit, reg.rows[0].code, reg.rows[0].no, reg.rows[0].alis], [7, 37, 32, "MATH 2263", 3, "Alttan"], "parseRegistration: satırlar, Table5 AKTS 37/32, şube ve Alış");
+    var all = JSON.stringify([t2, cur, off, reg]);
+    ok(all.indexOf("Demo Öğrenci") < 0 && all.indexOf("14.09.2023") < 0, "gizlilik: ayrıştırılan veride öğrenci adı / kayıt tarihi yok");
+
+    /* uçtan uca: arka plan birleştirme -> model -> kontrol / plan / yol haritası */
+    var data = X.emptyData();
+    ["t1", "t2", "t3", "t4"].forEach(function (k) { data = S.merge(data, "timetable", OBS.parse(D[k])).data; });
+    data = S.merge(data, "curriculum", cur).data;
+    data = S.merge(data, "offered", off).data;
+    data = S.merge(data, "registration", reg).data;
+    var C = X.build(data, window.KAYIT_DATA);
+    ok(C.isME, "model: program Makine Mühendisliği olarak tanındı (bilgi paketi yüklendi)");
+    eq([C.M.completedSemesters(), C.M.standing().key, C.M.limit()], [4, "sinamali", 32], "model: tamamlanan yarıyıl varsayımı, statü ve OBS limiti");
+    ok(C.M.passed("SE 1115") && C.M.key("SE 1115") === "ENGR 1115", "model: alınan kod -> müfredat kodu eşlemesi");
+    var R = X.check(C, []);
+    function has(code, type) { var i = R.regRows.map(function (r) { return r.code; }).indexOf(code); return i >= 0 && R.res.rows[i].issues.some(function (x) { return x.type === type; }); }
+    ok(has("ME 3320", "conflict") && has("ENGR 4411", "conflict"), "demo kontrol: ME 3320(1) ile ENGR 4411(1) çakışması");
+    ok(has("MATH 2263", "conflictSoft"), "demo kontrol: MATH 2263 tekrar dersi izinli çakışma");
+    ok(has("EEE 3718", "prereq"), "demo kontrol: EEE 3718 ön koşul (MATH 2263) ihlali");
+    ok(has("ME 4910", "special"), "demo kontrol: ME 4910 özel şartı");
+    ok(R.res.global.some(function (g) { return g.type === "limit" && g.total === 37 && g.limit === 32; }), "demo kontrol: AKTS 37/32 limit aşımı");
+    ok(R.res.global.some(function (g) { return g.type === "missingRetake" && g.code === "MATH 2230"; }), "demo kontrol: kayıtta olmayan MATH 2230 tekrarı");
+    var i3320 = R.regRows.map(function (r) { return r.code; }).indexOf("ME 3320");
+    eq((R.alts[i3320] || []).map(function (s) { return s.id; }), ["ME 3320#2"], "demo kontrol: çakışan şubeye alternatif öneri ME 3320(2)");
+    var t = KayitPanel.makeT("tr");
+    ok(/çakışıyor/.test(KayitPanel.issueText(R.res.rows[i3320].issues[0], C, t, R.regRows[i3320])), "metin: sorunlar okunur Türkçe cümleye çevrilir");
+    ok(/Conflicts with/.test(KayitPanel.issueText(R.res.rows[i3320].issues[0], C, KayitPanel.makeT("en"), R.regRows[i3320])), "metin: İngilizce çeviri");
+
+    var E = X.eligible(C);
+    eq(E.groups.retake.map(function (x) { return x.code; }).sort(), ["MATH 2230", "MATH 2263"], "alabileceklerim: önce tekrar edilecek zorunlu dersler");
+    ok(E.groups.blocked.length > 0 && E.groups.passed.length > 0, "alabileceklerim: kilitli ve geçilmiş gruplar dolu");
+    eq(X.mapToCurriculum(C, ["ENGR 4451", "ME 3220"]), ["UNV ELECT ME1", "ME 3220"], "yol haritası: müfredat dışı seçmeli boş yuvaya eşlenir");
+
+    var cart = ["MATH 2230", "MATH 2263", "ME 3220", "ME 3320", "ENGR 4411"];
+    var pr = X.plan(C, cart, [], X.DEFAULT_PREFS);
+    ok(pr.ranked.length > 0, "plan: çakışmasız kombinasyon bulundu", pr.blocking.join(";"));
+    var A = pr.ranked[0].combo, hard = 0;
+    for (var i = 0; i < A.length; i++) for (var j = i + 1; j < A.length; j++) if (C.pairHard(A[i], A[j])) hard++;
+    eq(hard, 0, "plan: Plan A'da sert çakışma yok");
+    var V = X.variants(C, A, [], X.DEFAULT_PREFS);
+    ok(V.plans[0].key === "A" && V.plans.length >= 2, "plan: Plan B üretildi");
+    var full = [A.filter(function (s) { return s.code === "MATH 2263"; })[0].id];
+    var pr2 = X.plan(C, cart, full, X.DEFAULT_PREFS);
+    ok(pr2.ranked.length && pr2.ranked[0].combo.every(function (s) { return full.indexOf(s.id) < 0; }), "plan: 'Dolu' işaretli şube yeniden planlamada kullanılmaz");
+    var L = X.entryList(C, A, V, []);
+    ok(L[0].retake, "kayıt günü listesi: tekrar dersleri önce");
+
+    var opts = X.roadmapOpts(C, "suggest", null, { expected: 2 });
+    var B = K.roadmapBundle(C.M, opts);
+    eq(B.validation.length, 0, "planRoadmap: önerilen plan doğrulamadan geçer", JSON.stringify(B.validation));
+    ok(B.res.gradIndex !== null && B.res.totalOk, "planRoadmap: mezuniyet planlandı ve 240 AKTS tamamlanıyor");
+    var Breg = K.roadmapBundle(C.M, X.roadmapOpts(C, "reg", null, { expected: 2 }));
+    ok(Breg.validation.some(function (e) { return e.type === "special" && e.code === "ME 4910"; }), "planRoadmap: OBS kaydı modunda ME 4910 ihlali raporlanır");
+    var html = KayitRoadmapView.render(B, { t: t, lang: "tr", num2: t.num2, name: function (c) { return C.name(c, "tr"); }, M: C.M, expected: 2, mode: "suggest", modes: null });
+    ok(/rm-valid ok/.test(html) && /data-act="rm-fail"/.test(html), "roadmap-view: HTML üretildi (geçerli plan + 'ya kalırsam' düğmeleri)");
+
+
+    /* ---------- 4) ek sayfalar: devamsızlık, not listesi, sınav takvimi, kişisel program, akademik takvim ---------- */
+    eq([OBS.detect(D.att), OBS.detect(D.grd), OBS.detect(D.ex), OBS.detect(D.my), OBS.detect(D.ac)], ["attendance", "grades", "exams", "mytimetable", "acadcal"], "detect: beş ek sayfa türü (devamsızlık sayfası 'açılan dersler' sanılmaz)");
+    eq(OBS.parseLimit("Toplam 14 Hafta (70 Saat).\nTeorik Toplamı 42 Saat, Devamsızlık Oranı (%30)/12 Saat.\n Uygulama Toplamı 28 Saat, Devamsızlık Oranı (%20)/5 Saat."),
+      { weeks: 14, totalHours: 70, theory: { hours: 42, pct: 30, max: 12 }, practice: { hours: 28, pct: 20, max: 5 } }, "parseLimit: bilgi ikonundaki devamsızlık sınırı metni");
+    var att = OBS.parse(D.att);
+    var aRow = function (c) { return att.rows.filter(function (r) { return r.code === c; })[0]; };
+    eq([aRow("MATH 2263").used, aRow("MATH 2263").tu, aRow("ENGR 4411").status, aRow("ME 4910").status], [14, "3+2", "noEntry", "notRequired"], "parseAttendance: saat, T+U, 'Yoklama Girişi Yapılmamış', 'Devam Zor.Yok'");
+    var grd = OBS.parse(D.grd);
+    var g3320 = grd.rows.filter(function (r) { return r.code === "ME 3320"; })[0];
+    eq([g3320.no, g3320.exams.map(function (e) { return e.name + ":" + e.score; }).join(","), g3320.exams[0].classAvg, g3320.exams[0].date], [1, "Mid-Term:48,Quiz:60,Quiz2:55", 52.6, "2026-11-11"], "parseGrades: kart başına sınav adı, not, sınıf ortalaması, ilan tarihi");
+    eq(grd.rows.filter(function (r) { return r.code === "ENGR 4411"; })[0].exams.length, 0, "parseGrades: 'Not Girilmemiş' satırı sınav sayılmaz");
+    var ex = OBS.parse(D.ex);
+    var e0 = ex.rows[0];
+    eq([ex.rows.length, e0.code, e0.date, e0.start, e0.end, e0.type, e0.room], [14, "MATH 2263", "2026-11-04", "18:00", "19:30", "midterm", "M216"], "parseExams: div satırlarından kod, tarih, saat aralığı, tür, derslik");
+    ok(ex.rows.some(function (r) { return r.type === "final" && r.code === "ME 4910" && r.date === "2027-01-12"; }), "parseExams: 'Yarıyıl Sonu' = final");
+    var synth = new DOMParser().parseFromString('<div><select id="cmbSinavTipi"></select><table id="rptSinavlar"><tr><th>Ders</th><th>Tür</th><th>Tarih</th><th>Saat</th><th>Yer</th></tr>' +
+      '<tr><td>ÇEV 1001(2) Çevre</td><td>Bütünleme</td><td>20.01.2027</td><td>13:30 - 15:00</td><td>B-201</td></tr></table></div>', "text/html");
+    var sx = OBS.parse(synth);
+    eq([OBS.detect(synth), sx.rows.length, sx.rows[0] && sx.rows[0].code, sx.rows[0] && sx.rows[0].type, sx.rows[0] && sx.rows[0].start, sx.rows[0] && sx.rows[0].room], ["exams", 1, "ÇEV 1001", "resit", "13:30", "B-201"], "parseExams: tablo biçimli (görülmemiş) yapıda da çalışır, Türkçe harfli kod");
+    var my = OBS.parse(D.my);
+    var m2263 = my.sections.filter(function (x) { return x.id === "MATH 2263#3"; })[0];
+    eq(m2263 && m2263.slots.map(function (x) { return x.day + " " + K.fmt(x.start) + "-" + K.fmt(x.end); }), ["Çar 10:40-12:30", "Per 08:40-11:30"], "parseMyTimetable: sütun başlığından gün, ardışık saatler birleşir, aynı hücrede iki ders");
+    var ac = OBS.parse(D.ac);
+    eq([ac.rows.length, ac.rows[2].name, ac.rows[2].start, ac.rows[2].end], [7, "Ders Ekle/Bırak", "2026-09-21 09:00", "2026-10-09 17:00"], "parseAcadCal: ad, başlangıç, bitiş");
+    var all2 = JSON.stringify([att, grd, ex, my, ac]);
+    ok(all2.indexOf("Demo Öğrenci") < 0, "gizlilik: ek sayfalarda öğrenci adı okunmaz");
+
+    var data2 = JSON.parse(JSON.stringify(data));
+    [["attendance", att], ["grades", grd], ["exams", ex], ["mytimetable", my], ["acadcal", ac]].forEach(function (x) { data2 = S.merge(data2, x[0], x[1]).data; });
+    var C4 = X.build(data2, window.KAYIT_DATA), MO = KayitMore;
+    var A = MO.attendance(C4), ar = function (c) { return A.rows.filter(function (r) { return r.code === c; })[0]; };
+    eq([ar("MATH 2263").level, ar("EEE 3718").level, ar("ME 3320").level, ar("ENGR 4400").allowed, ar("ENGR 4400").level], ["over", "warn", "ok", 5, "ok"], "devamsızlık: sınır aşımı (NA), az kaldı, güvende; teorik saati 0 olan derste uygulama sınırı");
+    eq([ar("ME 3320").remaining, ar("ME 3320").blockHours, ar("ME 3320").sessions], [10, 3, 3], "devamsızlık: kalan saat ve ≈ oturum (3 saatlik blok)");
+    eq([MO.compKey("Mid-Term2"), MO.compKey("Quiz2"), MO.compKey("Practice(L"), MO.compKey("Participat"), MO.compKey("Yarıyıl Sonu Sınavı/ Dönem Projesi/Contribution of final Examination and Final Project"), MO.compKey("Proje/Project")],
+      ["mid", "quiz", "practice", "part", "final", "project"], "not hesabı: sınav adı -> Bologna bileşeni");
+    var G = MO.gradeModel(g3320, null, { D: 50 });
+    ok(Math.abs(G.current - 25.9) < 1e-6 && G.finalW === 40 && Math.ceil(G.needs[0].need) === 48, "not hesabı: ME 3320 mevcut 25,9 puan, geçme için finalden ≥ 48", JSON.stringify([G.current, G.finalW, G.needs]));
+    var Gu = MO.gradeModel({ code: "XYZ 1000", exams: [{ name: "Mid-Term", score: 80 }] }, { mid: 40, final: 60 }, { D: 50 });
+    ok(Gu.src === "user" && Math.abs(Gu.needs[0].need - 30) < 1e-6, "not hesabı: Bologna yoksa kullanıcı ağırlığıyla (40/60) final ihtiyacı 30");
+    ok(MO.gradeModel({ code: "XYZ 1000", exams: [] }, null, null).missing, "not hesabı: ağırlık yoksa 'gir' durumu");
+
+    var cal = MO.calendar(C4, {});
+    eq([cal.classSrc, cal.range.start, cal.range.end, cal.exams.length], ["mytimetable", "2026-09-21", "2026-12-26", 14], "takvim: kişisel programdan dersler, akademik takvimden dönem aralığı");
+    var ics = KayitICS.build({ name: "Test", classes: cal.classes, exams: cal.exams, deadlines: cal.deadlines, range: cal.range, alarms: true, now: new Date(Date.UTC(2026, 9, 15, 12, 0, 0)) }).text;
+    var lines = ics.split("\r\n");
+    ok(/\r\n$/.test(ics) && ics.replace(/\r\n/g, "").indexOf("\n") < 0 && ics.indexOf("\r") === ics.indexOf("\r\n"), "ics: tüm satırlar CRLF ile biter");
+    var enc = new TextEncoder(), tooLong = lines.filter(function (l) { return enc.encode(l).length > 75; });
+    eq(tooLong.length, 0, "ics: hiçbir satır 75 okteti aşmaz (katlama)");
+    var stack = [], balanced = true;
+    lines.forEach(function (l) {
+      var m = /^(BEGIN|END):(\w+)$/.exec(l);
+      if (!m) return;
+      if (m[1] === "BEGIN") stack.push(m[2]); else if (stack.pop() !== m[2]) balanced = false;
+    });
+    ok(balanced && !stack.length && lines[0] === "BEGIN:VCALENDAR", "ics: BEGIN/END çiftleri dengeli ve iç içe doğru");
+    var unfolded = ics.replace(/\r\n /g, "");
+    var rr = unfolded.match(/RRULE:FREQ=WEEKLY;UNTIL=(\d{8}T\d{6}Z)/g) || [];
+    eq([rr.length, rr[0]], [12, "RRULE:FREQ=WEEKLY;UNTIL=20261226T205959Z"], "ics: 12 haftalık ders bloğu, UNTIL UTC (26.12.2026 23:59:59 İstanbul)");
+    ok(/DTSTART;TZID=Europe\/Istanbul:20260922T084000/.test(unfolded) && /BEGIN:VTIMEZONE\r\nTZID:Europe\/Istanbul/.test(ics), "ics: ilk ders tarihi dönem başından sonraki doğru gün (Salı 22.09), TZID + VTIMEZONE");
+    eq([(unfolded.match(/BEGIN:VALARM/g) || []).length, (unfolded.match(/TRIGGER:-P1D/g) || []).length, (unfolded.match(/TRIGGER:-PT1H/g) || []).length], [28, 14, 14], "ics: her sınava 1 gün ve 1 saat önce hatırlatıcı");
+    ok(/DTSTART;VALUE=DATE:20260921\r\nDTEND;VALUE=DATE:20261010/.test(unfolded), "ics: son tarihler tüm gün (DTEND bitişten sonraki gün)");
+    var longLine = "DESCRIPTION:" + new Array(30).join("Çakışma, ön koşul; ");
+    var folded = KayitICS.fold(longLine);
+    ok(folded.split("\r\n").every(function (l) { return enc.encode(l).length <= 75; }) && folded.replace(/\r\n /g, "") === longLine, "ics: katlama UTF-8 karakter bölmez ve geri açılınca aynı satır");
+    eq(KayitICS.esc("a,b;c\\d\ne"), "a\\,b\\;c\\\\d\\ne", "ics: metin kaçışları (virgül, noktalı virgül, ters bölü, satır sonu)");
+    var up = MO.upcoming(C4, new Date(2026, 9, 15, 12, 0));
+    eq([up[0].kind, up[0].name, up[1].kind, up[1].name], ["ends", "Yeni Öğrenci Kayıt ve Ders Ekle/Bırak", "exam", "MATH 2263"], "yaklaşan: kapanmak üzere olan son tarih ve ilk sınav");
+    eq(MO.countdown(up[0].at, new Date(2026, 9, 15, 12, 0)), { n: 1, unit: "day" }, "yaklaşan: geri sayım");
+    eq([OBS.sessionLeft(new DOMParser().parseFromString('<span id="prolizSessionLeft">04:59</span>', "text/html")), OBS.sessionLeft(document)], [299, null], "oturum sayacı: 'MM:SS' -> saniye");
+
+    /* program bilgi paketi yoksa (başka bölüm): çökmeden çalışır */
+    var other = JSON.parse(JSON.stringify(data));
+    other.curriculum.program = "MÜHENDİSLİK FAKÜLTESİ - ENDÜSTRİ MÜHENDİSLİĞİ"; other.curriculum.curriculumName = "ENDÜSTRİ MÜHENDİSLİĞİ";
+    var C2 = X.build(other, window.KAYIT_DATA);
+    ok(!C2.isME && C2.M.prereqsOf("EEE 3718").length === 0, "başka program: ön koşul bilgisi uygulanmaz");
+    var R2 = X.check(C2, []);
+    ok(R2 && R2.res.global.some(function (g) { return g.type === "limit"; }) && !R2.res.rows.some(function (r) { return r.issues.some(function (x) { return x.type === "prereq" || x.type === "special"; }); }), "başka program: çakışma/limit çalışır, ön koşul uyarısı yok");
+    var C3 = X.build({ v: 1, timetable: data.timetable, curriculum: null, offered: null, registration: null }, window.KAYIT_DATA);
+    ok(!C3.M.hasCurriculum && X.eligible(C3) && X.plan(C3, ["MATH 2230"], [], X.DEFAULT_PREFS).ranked.length === 1, "müfredat yokken: model boş ama plan çalışır");
+  }).catch(function (e) { log(false, "demo sayfaları yüklenemedi", e && e.message); }).then(function () {
+    var el = document.getElementById("sum");
+    el.textContent = (fail ? "BAŞARISIZ" : "TÜMÜ GEÇTİ") + ": " + pass + " geçti, " + fail + " kaldı";
+    el.className = fail ? "fail" : "pass";
+    window.__kaTestResult = { pass: pass, fail: fail };
+  });
+})();
+</script>
+</body>
+</html>

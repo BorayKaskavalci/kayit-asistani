@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr" data-root="../..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ders Kayıt Özeti – DEMO</title>
+<link rel="stylesheet" href="../obs.css">
+</head>
+<body>
+<div class="page">
+  <div class="alert-warn" id="lblUyari">2026-2027 Güz Dönemi … Ders Kayıt işlemleri 09.10.2026 17:00 tarihinde kapatılmıştır(!).</div>
+  <div class="demo-note"><b>DEMO:</b> Bu sayfa gerçek OBS değildir; kurgusal öğrencinin bilerek sorunlu hazırlanmış kaydını gösterir. / Fictional student with a deliberately problematic registration.</div>
+  <table id="tblOgrInfoBar" class="tbl-info"><tbody>
+    <tr><td class="lbl">Öğrenci</td><td>Demo Öğrenci</td><td class="lbl">Kayıt Tarihi</td><td>14.09.2023</td></tr>
+    <tr><td class="lbl">Fakülte-Program</td><td>MÜHENDİSLİK FAK. - MAKİNE MÜHENDİSLİĞİ</td><td class="lbl">Sınıf</td><td>3</td></tr>
+    <tr><td class="lbl">Kayıt Nedeni</td><td>ÖSYM</td><td class="lbl">Öğrenim Süre</td><td>4 Yıl</td></tr>
+    <tr><td class="lbl">Müfredat</td><td>2025-2026 MAKİNA MÜHENDİSLİĞİ BOLOGNA MÜFREDATI</td><td class="lbl">Genel Ortalama</td><td>1,77</td></tr>
+  </tbody></table>
+  <div style="margin-bottom:8px">
+    <button type="button" class="btn" id="btnDKsecenekM">Ders Kayıt Seçenekleri</button>
+    <button type="button" class="btn" id="btnDersProgrami">Ders Programı</button>
+    <button type="button" class="btn" id="btnDersProgBolum">Bölüm Ders Programı</button>
+    <button type="button" class="btn" id="btnMufredatDers">Müfredat Dersleri</button>
+    <button type="button" class="btn" id="btnDersKayitGecmis">Ders Kayıt Geçmişi</button>
+    <button type="button" class="btn" id="btnYazdir">Yazdır</button>
+    <button type="button" class="btn" id="btnDersKayitMesajlar">Mesajlar</button>
+  </div>
+  <div class="scroll-x">
+  <table class="ProlizMGrid" cellspacing="0" rules="all" border="1" id="grdDersKayit" style="border-collapse:collapse;">
+    <tbody><tr><th scope="col">Şb.</th><th scope="col">Ders Kodu</th><th scope="col">Ders Adı</th><th scope="col">Z/S</th><th scope="col">T+U</th><th scope="col">Krd</th><th scope="col">AKTS</th><th scope="col">Snf</th><th scope="col">Alış</th><th scope="col">Aç.Neden</th><th scope="col">&nbsp;</th><th scope="col">&nbsp;</th></tr>
+      <tr><td>3</td><td>MATH 2263</td><td>DİFERANSİYEL DENKLEMLER VE DİNAMİK SİSTEMLER</td><td>Z</td><td>3+2</td><td>4</td><td>7</td><td>2</td><td>Alttan</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_0">Diğer Bilgiler</button></td></tr>
+      <tr><td>1</td><td>EEE 3718</td><td>GERİ BESLEME SİSTEMLERİ</td><td>Z</td><td>3+2</td><td>4</td><td>6</td><td>3</td><td>Zorunlu</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_1">Diğer Bilgiler</button></td></tr>
+      <tr><td>1</td><td>ME 3320</td><td>ISI VE KÜTLE TRANSFERİ</td><td>Z</td><td>3+2</td><td>4</td><td>6</td><td>3</td><td>Zorunlu</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_2">Diğer Bilgiler</button></td></tr>
+      <tr><td>1</td><td>ENGR 4411</td><td>SÜRDÜRÜLEBİLİR KALKINMA İÇİN MÜHENDİSLİK</td><td>Z</td><td>1+1</td><td>1,5</td><td>3</td><td>4</td><td>Zorunlu</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_3">Diğer Bilgiler</button></td></tr>
+      <tr><td>1</td><td>ME 3220</td><td>MÜHENDİSLİK MEKANİĞİ II</td><td>Z</td><td>2+2</td><td>3</td><td>5</td><td>3</td><td>Zorunlu</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_4">Diğer Bilgiler</button></td></tr>
+      <tr><td>1</td><td>ENGR 4400</td><td>MÜHENDİSLİK ETİĞİ VE SEMİNER</td><td>Z</td><td>0+2</td><td>1</td><td>2</td><td>4</td><td>Zorunlu</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_5">Diğer Bilgiler</button></td></tr>
+      <tr><td>1</td><td>ME 4910</td><td>MEZUNİYET TASARIM PROJESİ I</td><td>Z</td><td>1+4</td><td>3</td><td>8</td><td>4</td><td>Zorunlu</td><td>Dnm.</td><td>&nbsp;</td><td><button type="button" class="btn" id="grdDersKayit_btnDersDigerBilgiler_6">Diğer Bilgiler</button></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <table id="Table5" class="tbl-total"><tbody><tr><td>Toplam; Kredi : 20,5 AKTS : 37/32</td></tr></tbody></table>
+</div>
+<script>if(/[?&]dev=1/.test(location.search)){var s=document.createElement('script');s.src=(document.documentElement.getAttribute('data-root')||'..')+'/extension/dev/loader.js?v='+Date.now();document.body.appendChild(s);}</script>
+</body>
+</html>

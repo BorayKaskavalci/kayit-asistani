@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr" data-root="../..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sınav Takvimi – DEMO</title>
+<link rel="stylesheet" href="../obs.css">
+</head>
+<body>
+<div class="page">
+  <div class="demo-note"><b>DEMO</b> – gerçek OBS değildir; kurgusal öğrenci.</div>
+  <div class="card"><div class="card-head">Sınav Takvimi</div><div class="card-body sel-bar">
+    <div><label for="cmbDonemler">Dönem</label><select name="cmbDonemler" id="cmbDonemler"><option selected="selected" value="20262">2026-2027 Güz</option><option value="20261">2025-2026 Bahar</option></select></div>
+    <div><label for="cmbSinavTipi">Sınav Tipi</label><select name="cmbSinavTipi" id="cmbSinavTipi"><option selected="selected" value="">Tümü</option><option value="1">Ara Sınav</option><option value="2">Yarıyıl Sonu</option><option value="3">Bütünleme</option></select></div>
+    <div><label for="txtSinavTarihi">Sınav Tarihi</label><input type="text" id="txtSinavTarihi" name="txtSinavTarihi" placeholder="gg.aa.yyyy" style="padding:5px;border:1px solid #b9c0ca;border-radius:3px"></div>
+  </div></div>
+  <div><span id="lblSonuc"></span></div>
+  <div class="rpt-panel" id="rptSinavlar"><div class="rpt-panel-body">
+    <div id="rptSinavlar_divEmptyMessage" style="display:none">Sınav bulunamadı.</div>
+    <div class="rpt-header"><div>Ders Kodu</div><div>Ders Adı</div><div>Sınav Türü</div><div>Tarih</div><div>Saat</div><div>Derslik</div></div>
+    <div class="row rpt-row"><div>MATH 2263</div><div>DİFERANSİYEL DENKLEMLER VE DİNAMİK SİSTEMLER</div><div>Ara Sınav</div><div>04.11.2026</div><div>18:00-19:30</div><div>M216</div></div>
+    <div class="row rpt-row"><div>EEE 3718</div><div>GERİ BESLEME SİSTEMLERİ</div><div>Ara Sınav</div><div>05.11.2026</div><div>17:40-19:10</div><div>M528</div></div>
+    <div class="row rpt-row"><div>ME 3320</div><div>ISI VE KÜTLE TRANSFERİ</div><div>Ara Sınav</div><div>06.11.2026</div><div>18:00-19:30</div><div>M113</div></div>
+    <div class="row rpt-row"><div>ME 3220</div><div>MÜHENDİSLİK MEKANİĞİ II</div><div>Ara Sınav</div><div>09.11.2026</div><div>18:00-19:30</div><div>M528</div></div>
+    <div class="row rpt-row"><div>ENGR 4411</div><div>SÜRDÜRÜLEBİLİR KALKINMA İÇİN MÜHENDİSLİK</div><div>Ara Sınav</div><div>10.11.2026</div><div>18:00-19:00</div><div>X001</div></div>
+    <div class="row rpt-row"><div>ENGR 4400</div><div>MÜHENDİSLİK ETİĞİ VE SEMİNER</div><div>Ara Sınav</div><div>11.11.2026</div><div>18:00-19:00</div><div>X001</div></div>
+    <div class="row rpt-row"><div>ME 4910</div><div>MEZUNİYET TASARIM PROJESİ I</div><div>Ara Sınav</div><div>12.11.2026</div><div>17:00-18:00</div><div>M534</div></div>
+    <div class="row rpt-row"><div>MATH 2263</div><div>DİFERANSİYEL DENKLEMLER VE DİNAMİK SİSTEMLER</div><div>Yarıyıl Sonu</div><div>05.01.2027</div><div>09:00-11:00</div><div>M216</div></div>
+    <div class="row rpt-row"><div>EEE 3718</div><div>GERİ BESLEME SİSTEMLERİ</div><div>Yarıyıl Sonu</div><div>06.01.2027</div><div>09:00-11:00</div><div>M528</div></div>
+    <div class="row rpt-row"><div>ME 3320</div><div>ISI VE KÜTLE TRANSFERİ</div><div>Yarıyıl Sonu</div><div>07.01.2027</div><div>09:00-11:00</div><div>M113</div></div>
+    <div class="row rpt-row"><div>ME 3220</div><div>MÜHENDİSLİK MEKANİĞİ II</div><div>Yarıyıl Sonu</div><div>08.01.2027</div><div>09:00-11:00</div><div>M528</div></div>
+    <div class="row rpt-row"><div>ENGR 4411</div><div>SÜRDÜRÜLEBİLİR KALKINMA İÇİN MÜHENDİSLİK</div><div>Yarıyıl Sonu</div><div>11.01.2027</div><div>10:00-11:30</div><div>X001</div></div>
+    <div class="row rpt-row"><div>ENGR 4400</div><div>MÜHENDİSLİK ETİĞİ VE SEMİNER</div><div>Yarıyıl Sonu</div><div>11.01.2027</div><div>13:00-14:00</div><div>X001</div></div>
+    <div class="row rpt-row"><div>ME 4910</div><div>MEZUNİYET TASARIM PROJESİ I</div><div>Yarıyıl Sonu</div><div>12.01.2027</div><div>10:00-12:00</div><div>M534</div></div>
+  </div></div>
+</div>
+<script>if(/[?&]dev=1/.test(location.search)){var s=document.createElement('script');s.src=(document.documentElement.getAttribute('data-root')||'..')+'/extension/dev/loader.js?v='+Date.now();document.body.appendChild(s);}</script>
+</body>
+</html>

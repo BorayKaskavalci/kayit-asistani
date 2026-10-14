@@ -322,7 +322,20 @@
       electives: [
         { key: "bolum", name: { tr: "Bölüm Seçmeli (A1-A3, B1-B3; 6 x 6 AKTS)", en: "Department Electives (A1-A3, B1-B3; 6 x 6 ECTS)" }, ects: 36, slots: 6 },
         { key: "univ", name: { tr: "Üniversite Seçmeli (ME1: 4 + ME3: 3 AKTS)", en: "University Electives (ME1: 4 + ME3: 3 ECTS)" }, ects: 7, slots: 2 }
-      ]
+      ],
+      /* Mezuniyet yol haritası için seçmeli YUVALARI (OBS müfredatındaki satır kodlarıyla, yarıyılı ile) */
+      electiveSlots: [
+        { code: "UNV ELECT ME1", group: "univ", semester: 5, ects: 4, tr: "Üniversite Seçmeli ME1", en: "University Elective ME1" },
+        { code: "ELECT ME A1", group: "bolum", semester: 6, ects: 6, tr: "Bölüm Seçmeli A1", en: "Department Elective A1" },
+        { code: "ELECT ME A2", group: "bolum", semester: 7, ects: 6, tr: "Bölüm Seçmeli A2", en: "Department Elective A2" },
+        { code: "ELECT ME B1", group: "bolum", semester: 7, ects: 6, tr: "Bölüm Seçmeli B1", en: "Department Elective B1" },
+        { code: "ELECT ME A3", group: "bolum", semester: 8, ects: 6, tr: "Bölüm Seçmeli A3", en: "Department Elective A3" },
+        { code: "ELECT ME B2", group: "bolum", semester: 8, ects: 6, tr: "Bölüm Seçmeli B2", en: "Department Elective B2" },
+        { code: "ELECT ME B3", group: "bolum", semester: 8, ects: 6, tr: "Bölüm Seçmeli B3", en: "Department Elective B3" },
+        { code: "UNV ELECT ME3", group: "univ", semester: 8, ects: 3, tr: "Üniversite Seçmeli ME3", en: "University Elective ME3" }
+      ],
+      /* yol haritasında "proje/staj" rengiyle gösterilen dersler */
+      project: ["ME 4910", "ME 4920", "ME 4830"]
     }
   };
 })();

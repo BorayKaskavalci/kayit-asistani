@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "Kayıt Asistanı – OBS",
+  "short_name": "Kayıt Asistanı",
+  "version": "1.0.0",
+  "description": "OBS'de ders kaydı, devamsızlık, not hesabı ve takvim yardımcısı: çakışma, ön koşul, AKTS limiti, Plan A/B/C, mezuniyet yol haritası.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Kayıt Asistanı – OBS",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://obs.yasar.edu.tr/oibs/*",
+        "https://boraykaskavalci.github.io/kayit-asistani/demo-obs/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "lib/kayit-core.js",
+        "lib/obs-parsers.js",
+        "lib/obs-parsers-more.js",
+        "lib/data.js",
+        "lib/weights.js",
+        "lib/i18n.js",
+        "lib/panel-i18n.js",
+        "lib/roadmap-view.js",
+        "lib/ka-model.js",
+        "lib/ka-more.js",
+        "lib/ics.js",
+        "lib/panel.js",
+        "content.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "panel.css",
+        "lib/roadmap.css"
+      ],
+      "matches": [
+        "https://obs.yasar.edu.tr/*",
+        "https://boraykaskavalci.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ]
+    }
+  ]
+}

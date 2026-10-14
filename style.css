@@ -279,3 +279,5 @@ details { margin-top: 10px; } summary { cursor: pointer; font-weight: 600; font-
 .how li span { color: var(--muted); }
 .plan-card.fail { border-color: var(--warn); } .plan-card .fix { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
 .plan-card .reasons { color: var(--warn); }
+.ext-dl { text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.roadmap-card .rm { margin-top: 10px; }
