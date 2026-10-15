@@ -1021,7 +1021,8 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (el) { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
     $("demoNote").textContent = t("demo.note", { u: D.meta.university, d: D.meta.department, term: L(D.meta.term) });
-    $("footGroup").textContent = t("foot.group") + " " + D.meta.group.join(" · ");
+    var grp = D.meta.group.filter(function (g) { return !/^Üye \d/.test(g); });
+    $("footGroup").textContent = grp.length ? t("foot.group") + " " + grp.join(" · ") : "";
     var cur = $("fSem").value, o = '<option value="">' + esc(t("opt.all")) + '</option>', sems = {};
     D.courses.forEach(function (c) { sems[c.semester] = true; });
     Object.keys(sems).sort(function (a, b) { return a - b; }).forEach(function (s) { o += '<option value="' + s + '">' + esc(t("opt.sem", { n: s })) + '</option>'; });

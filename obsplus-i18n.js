@@ -105,6 +105,7 @@
       "ab.h4": "Sunucu yok: her şey tarayıcıda çalışır, hiçbir veri bir yere gönderilmez.",
       "ab.extT": "Bonus: gerçek OBS'nin içinde çalışan eklenti",
       "ab.ext": "Aynı kural motoru bir Chrome eklentisi olarak gerçek OBS sayfalarının içinde de çalışır: OBS'yi yalnızca okur, kayıt sayfasındaki hataları satır satır işaretler.",
+      "foot.text": "GenAI (ENGR 4451) dersi projesi. Resmi OBS değildir; kurgusal öğrenci.",
       "ab.extDemo": "Eklentiyi demo OBS'de dene", "ab.extDl": "Eklentiyi indir (.zip)"
     },
     en: {
@@ -136,7 +137,7 @@
       "home.t.cartW": "No errors in your registration cart; check {w} warnings",
       "home.t.attZero": "{c}: no absences left; one more missed hour means NA",
       "home.t.failed": "Failed required courses: {l}. Retake them the first term they are offered",
-      "home.t.att": "{c}: only {n} hours of absence left",
+      "home.t.att": "{c}: only {n} hour(s) of absence left",
       "home.t.attOver": "{c}: absence limit exceeded, NA risk",
       "home.t.grade": "{c}: you need about {n} on the final to pass",
       "home.t.next": "Next: {n} ({d})",
@@ -147,7 +148,7 @@
       "att.summary": "Limit exceeded in {o} course(s), almost used up in {w} course(s).",
       "att.allOk": "You have enough absences left in every course.",
       "att.theory": "Theory", "att.practice": "Practice", "att.hrs": "hours", "att.none": "none in this course",
-      "att.leftMsg": "{n} hours left (≈ {w} week(s) of classes).",
+      "att.leftMsg": "{n} hour(s) left (≈ {w} week(s) of classes).",
       "att.leftLess": "Only {n} hour(s) left: less than one week of classes.",
       "att.summaryW": "Your absences are almost used up in {w} course(s).",
       "g.nothing": "No scores entered yet for this course; the estimate uses the target letter.",
@@ -210,6 +211,7 @@
       "ab.h4": "No server: everything runs in the browser and no data is sent anywhere.",
       "ab.extT": "Bonus: an extension that runs inside the real OBS",
       "ab.ext": "The same rule engine also runs as a Chrome extension inside real OBS pages: it only reads OBS and marks problems row by row on the registration page.",
+      "foot.text": "GenAI (ENGR 4451) course project. Not the official OBS; fictional student.",
       "ab.extDemo": "Try the extension on the demo OBS", "ab.extDl": "Download the extension (.zip)"
     }
   };
