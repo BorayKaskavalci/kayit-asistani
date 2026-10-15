@@ -287,6 +287,50 @@
       problem: { sections: ["MATH 2230#1", "MATH 2263#3", "ME 3220#1", "ME 3320#1", "ENGR 4411#1", "EEE 3718#1", "ME 4910#1", "ENGR 3450#1"] }
     },
 
+    /* YaşarOBS+ "bu dönem" ekranları (KURGUSAL öğrenci). Kayıtlı dersler = "Dengeli dönem" senaryosunun
+       çakışmasız şubeleri (uygulama hesaplar). Devamsızlık: kullanılan saat (teorik t / uygulama u).
+       Notlar: girilmiş sınavlar; ağırlıklar OBS Bologna'dan (extension/lib/weights.js).
+       Sınav ve akademik takvim tarihleri ÖRNEKTİR (gerçek takvim yayımlanınca OBS'den okunur). */
+    current: {
+      today: "2026-10-15",
+      weeks: 14,
+      absence: { theory: 0.30, practice: 0.20 },   /* m.29(2): teorik %70, uygulama %80 devam */
+      attendance: {
+        "MATH 2263": { t: 11, u: 2 }, "MATH 2230": { t: 2, u: 0 }, "ME 3220": { t: 6, u: 3 },
+        "ME 3320": { t: 3, u: 0 }, "ME 3420": { t: 0, u: 1 }, "ENGR 4411": { t: 4, u: 1 }
+      },
+      grades: {
+        "MATH 2263": [{ name: "Quiz 1", score: 45, classAvg: 58, date: "2026-10-09" }, { name: "Practice (Lab avg.)", score: 70, classAvg: 72, date: "2026-10-14" }],
+        "MATH 2230": [{ name: "Homework 1", score: 55, classAvg: 68, date: "2026-10-07" }, { name: "Quiz 1", score: 40, classAvg: 61, date: "2026-10-12" }],
+        "ME 3220": [],
+        "ME 3320": [{ name: "Quiz 1", score: 60, classAvg: 59, date: "2026-10-06" }, { name: "Quiz 2", score: 55, classAvg: 57, date: "2026-10-13" }],
+        "ME 3420": [{ name: "Quiz 1", score: 85, classAvg: 70, date: "2026-10-08" }],
+        "ENGR 4411": []
+      },
+      exams: [
+        { code: "ME 3320", type: "mid", date: "2026-11-09", start: "09:00", end: "11:00", room: "M113" },
+        { code: "MATH 2263", type: "mid", date: "2026-11-10", start: "13:00", end: "15:00", room: "M433" },
+        { code: "MATH 2230", type: "mid", date: "2026-11-11", start: "10:00", end: "12:00", room: "M534" },
+        { code: "ME 3220", type: "mid", date: "2026-11-12", start: "09:00", end: "11:00", room: "M528" },
+        { code: "ME 3420", type: "mid", date: "2026-11-13", start: "13:00", end: "15:00", room: "M534" },
+        { code: "ME 3320", type: "final", date: "2026-12-28", start: "09:00", end: "11:30", room: "M113" },
+        { code: "MATH 2263", type: "final", date: "2026-12-30", start: "13:00", end: "15:30", room: "M433" },
+        { code: "MATH 2230", type: "final", date: "2027-01-04", start: "10:00", end: "12:30", room: "M534" },
+        { code: "ME 3220", type: "final", date: "2027-01-06", start: "09:00", end: "11:30", room: "M528" },
+        { code: "ME 3420", type: "final", date: "2027-01-08", start: "13:00", end: "15:30", room: "M534" }
+      ],
+      acadcal: [
+        { tr: "Ders kaydı ve danışman onayı", en: "Course registration and advisor approval", start: "2026-09-14", end: "2026-10-09" },
+        { tr: "Ders ekle / bırak", en: "Add / drop", start: "2026-09-21", end: "2026-10-09" },
+        { tr: "Yeni öğrenci kayıt ve ekle/bırak", en: "New-student registration and add/drop", start: "2026-09-14", end: "2026-10-16" },
+        { tr: "Ara sınav haftası", en: "Midterm week", start: "2026-11-09", end: "2026-11-13" },
+        { tr: "Dersten çekilme (W) son gün", en: "Last day to withdraw (W)", start: "2026-12-04", end: "2026-12-04" },
+        { tr: "Yarıyıl sonu sınavları", en: "Final exams", start: "2026-12-28", end: "2027-01-09" },
+        { tr: "Harf notlarının ilanı", en: "Letter grades published", start: "2027-01-13", end: "2027-01-13" },
+        { tr: "Bahar dönemi ders kaydı", en: "Spring course registration", start: "2027-02-01", end: "2027-02-12" }
+      ]
+    },
+
     courses: courses,
 
     student: {

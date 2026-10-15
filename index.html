@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Kayıt Asistanı - OBS ders kaydı için akıllı yardımcı</title>
+  <title>YaşarOBS+</title>
   <meta name="description" content="OBS ders kaydındaki çakışma, ön koşul, kontenjan ve danışman onayı sorunlarını önceden gösteren demo yardımcı uygulama. / A demo helper for course-registration problems.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,44 +15,81 @@
 <body>
   <a class="skip" href="#main" data-i18n="skip">İçeriğe geç</a>
 
+  <!-- GİRİŞ (demo) -->
+  <div id="login" class="login" hidden>
+    <div class="login-card">
+      <div class="login-top">
+        <span class="logo" aria-hidden="true">Y+</span>
+        <div><h1>Yaşar<b>OBS+</b></h1><p class="subtitle" data-i18n="login.sub">Öğrenci Bilgi Sistemi · yeniden tasarlandı</p></div>
+        <button class="lang-btn" type="button" data-act="lang" data-i18n-aria="hdr.langAria" aria-label="Dili değiştir"><span>TR</span><span>EN</span></button>
+      </div>
+      <p class="alert warn small" data-i18n="login.warn">Ders projesi prototipi: gerçek OBS değildir. Kurgusal bir öğrenciyle açılır; şifre istenmez, hiçbir veri bir yere gönderilmez.</p>
+      <dl class="login-who">
+        <div><dt data-i18n="login.no">Öğrenci numarası</dt><dd id="loginNo"></dd></div>
+        <div><dt data-i18n="login.prog">Program</dt><dd id="loginProg"></dd></div>
+      </dl>
+      <button type="button" class="btn primary block" data-act="login" id="loginBtn" data-i18n="login.btn">Demo öğrenci olarak giriş yap</button>
+      <ul class="login-feat">
+        <li data-i18n="login.f1"></li><li data-i18n="login.f2"></li><li data-i18n="login.f3"></li><li data-i18n="login.f4"></li>
+      </ul>
+      <p class="small muted center"><a href="demo-obs/?dev=1" data-i18n="login.ext">Gerçek OBS'nin içinde çalışan Chrome eklentisi sürümünü dene</a></p>
+    </div>
+  </div>
+
+  <div id="appShell">
   <header class="app-header">
-    <div class="wrap header-row">
+    <div class="header-row">
       <div class="brand">
-        <span class="logo" aria-hidden="true">KA</span>
+        <span class="logo" aria-hidden="true">Y+</span>
         <div>
-          <h1 data-i18n="app.name">Kayıt Asistanı</h1>
+          <h1>Yaşar<b>OBS+</b></h1>
           <p class="subtitle" data-i18n="app.subtitle">OBS ders kaydı için akıllı yardımcı</p>
         </div>
       </div>
       <div class="header-right">
         <div class="student-chip" id="studentChip"></div>
         <button class="cart-pill" id="cartPill" type="button"></button>
-        <a class="btn small ghost ext-dl" href="extension.zip" download title="Kayıt Asistanı – OBS (Chrome, Manifest V3)"><span aria-hidden="true">&#11015;</span> <span data-i18n="hdr.ext">Chrome eklentisini indir</span></a>
-        <a class="btn small ghost" href="demo-obs/?dev=1" data-i18n-aria="hdr.demoObsAria" aria-label="Eklentiyi kurmadan demo OBS içinde dene"><span aria-hidden="true">&#9654;</span> <span data-i18n="hdr.demoObs">Demo OBS</span></a>
         <button class="btn small ghost" type="button" data-act="rules-open"><span aria-hidden="true">&#9432;</span> <span data-i18n="hdr.rules">Kurallar</span></button>
         <button class="lang-btn" id="langBtn" type="button" data-act="lang" data-i18n-aria="hdr.langAria" aria-label="Dili değiştir"><span>TR</span><span>EN</span></button>
+        <button class="btn small ghost" type="button" data-act="logout" data-i18n="hdr.logout">Çıkış</button>
       </div>
     </div>
   </header>
 
   <div class="demo-banner" role="note">
-    <div class="wrap"><strong data-i18n="demo.label">DEMO VERİSİ</strong> <span id="demoNote"></span></div>
+    <div class="banner-row"><strong data-i18n="demo.label">DEMO VERİSİ</strong> <span id="demoNote"></span></div>
   </div>
 
-  <nav class="tabs" data-i18n-aria="nav.aria" aria-label="Bölümler">
-    <div class="wrap tabs-row" role="tablist">
-      <button class="tab" role="tab" id="t-plan" aria-controls="tab-plan" data-tab="plan"><span class="tab-n">1</span> <span data-i18n="tab.plan">Ders Seç &amp; Program</span></button>
-      <button class="tab" role="tab" id="t-status" aria-controls="tab-status" data-tab="status"><span class="tab-n">2</span> <span data-i18n="tab.status">Ön Koşul &amp; Kontenjan</span></button>
-      <button class="tab" role="tab" id="t-grad" aria-controls="tab-grad" data-tab="grad"><span class="tab-n">3</span> <span data-i18n="tab.grad">Mezuniyet Takibi</span></button>
-      <button class="tab" role="tab" id="t-flow" aria-controls="tab-flow" data-tab="flow"><span class="tab-n">4</span> <span data-i18n="tab.flow">Danışman Onayı</span> <span class="tab-dot" id="flowDot" hidden></span></button>
-      <button class="tab" role="tab" id="t-reg" aria-controls="tab-reg" data-tab="reg"><span class="tab-n">5</span> <span data-i18n="tab.reg">Kayıt Günü Planı</span></button>
+  <div class="shell">
+  <nav class="side" data-i18n-aria="nav.aria" aria-label="Menü">
+    <div class="tabs-row">
+      <button class="tab" id="t-home" data-tab="home"><span class="ico" aria-hidden="true">&#8962;</span> <span data-i18n="tab.home">Ana Sayfa</span></button>
+      <p class="side-h" data-i18n="side.reg">Ders kaydı</p>
+      <button class="tab" id="t-plan" data-tab="plan"><span class="ico" aria-hidden="true">&#9638;</span> <span data-i18n="tab.plan">Ders Seç &amp; Program</span></button>
+      <button class="tab" id="t-status" data-tab="status"><span class="ico" aria-hidden="true">&#10003;</span> <span data-i18n="tab.status">Ön Koşul &amp; Kontenjan</span></button>
+      <button class="tab" id="t-flow" data-tab="flow"><span class="ico" aria-hidden="true">&#9993;</span> <span data-i18n="tab.flow">Danışman Onayı</span> <span class="tab-dot" id="flowDot" hidden></span></button>
+      <button class="tab" id="t-reg" data-tab="reg"><span class="ico" aria-hidden="true">&#9201;</span> <span data-i18n="tab.reg">Kayıt Günü Planı</span></button>
+      <p class="side-h" data-i18n="side.term">Bu dönem</p>
+      <button class="tab" id="t-att" data-tab="att"><span class="ico" aria-hidden="true">&#9203;</span> <span data-i18n="tab.att">Devamsızlık</span> <span class="tab-dot" id="attDot" hidden></span></button>
+      <button class="tab" id="t-grades" data-tab="grades"><span class="ico" aria-hidden="true">&#9998;</span> <span data-i18n="tab.grades">Notlar &amp; Final Hesabı</span></button>
+      <button class="tab" id="t-cal" data-tab="cal"><span class="ico" aria-hidden="true">&#128197;</span> <span data-i18n="tab.cal">Takvim &amp; Sınavlar</span></button>
+      <p class="side-h" data-i18n="side.grad">Mezuniyet</p>
+      <button class="tab" id="t-grad" data-tab="grad"><span class="ico" aria-hidden="true">&#127891;</span> <span data-i18n="tab.grad">Mezuniyet Yol Haritası</span></button>
+      <p class="side-h" data-i18n="side.about">Proje</p>
+      <button class="tab" id="t-about" data-tab="about"><span class="ico" aria-hidden="true">&#9733;</span> <span data-i18n="tab.about">OBS'den farkı</span></button>
     </div>
   </nav>
 
-  <main id="main" class="wrap">
+  <main id="main">
+
+    <section id="tab-home" class="panel" tabindex="-1"><div id="homeView"></div></section>
+    <section id="tab-att" class="panel" tabindex="-1" hidden><div id="attView"></div></section>
+    <section id="tab-grades" class="panel" tabindex="-1" hidden><div id="gradesView"></div></section>
+    <section id="tab-cal" class="panel" tabindex="-1" hidden><div id="calView"></div></section>
+    <section id="tab-about" class="panel" tabindex="-1" hidden><div id="aboutView"></div></section>
 
     <!-- 1. DERS SEÇ & PROGRAM -->
-    <section id="tab-plan" class="panel" role="tabpanel" aria-labelledby="t-plan" tabindex="-1">
+    <section id="tab-plan" class="panel" tabindex="-1" hidden>
       <div class="card intro-card" id="introCard" hidden>
         <div class="card-head"><h2 class="card-title" data-i18n="intro.title"></h2><button type="button" class="btn small ghost" data-act="intro-close" data-i18n="intro.close"></button></div>
         <ol class="how">
@@ -132,7 +169,7 @@
     </section>
 
     <!-- 2. ÖN KOŞUL & KONTENJAN -->
-    <section id="tab-status" class="panel" role="tabpanel" aria-labelledby="t-status" tabindex="-1" hidden>
+    <section id="tab-status" class="panel" tabindex="-1" hidden>
       <div class="intro">
         <h2 data-i18n="status.title"></h2>
         <p class="muted" data-i18n="status.intro"></p>
@@ -157,20 +194,21 @@
     </section>
 
     <!-- 3. MEZUNİYET -->
-    <section id="tab-grad" class="panel" role="tabpanel" aria-labelledby="t-grad" tabindex="-1" hidden>
+    <section id="tab-grad" class="panel" tabindex="-1" hidden>
       <div id="gradView"></div>
     </section>
 
     <!-- 4. DANIŞMAN ONAYI -->
-    <section id="tab-flow" class="panel" role="tabpanel" aria-labelledby="t-flow" tabindex="-1" hidden>
+    <section id="tab-flow" class="panel" tabindex="-1" hidden>
       <div id="flowView"></div>
     </section>
 
     <!-- 5. KAYIT GÜNÜ PLANI -->
-    <section id="tab-reg" class="panel" role="tabpanel" aria-labelledby="t-reg" tabindex="-1" hidden>
+    <section id="tab-reg" class="panel" tabindex="-1" hidden>
       <div id="regView"></div>
     </section>
   </main>
+  </div>
 
   <footer class="footer">
     <div class="wrap">
@@ -179,6 +217,7 @@
       <p><button type="button" class="linklike" data-act="reset-all" data-i18n="foot.reset"></button></p>
     </div>
   </footer>
+  </div>
 
   <dialog id="rulesDlg" class="dlg" aria-labelledby="rulesTitle">
     <div class="dlg-head"><h2 id="rulesTitle" data-i18n="rules.title"></h2><button type="button" class="btn small" data-act="rules-close" data-i18n="rules.close"></button></div>
@@ -189,8 +228,12 @@
 
   <script src="data.js"></script>
   <script src="i18n.js"></script>
+  <script src="obsplus-i18n.js"></script>
   <script src="extension/lib/kayit-core.js"></script>
   <script src="extension/lib/roadmap-view.js"></script>
+  <script src="extension/lib/weights.js"></script>
+  <script src="extension/lib/ka-more.js"></script>
+  <script src="extension/lib/ics.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -9,7 +9,8 @@
   var K = window.KayitCore, RV = window.KayitRoadmapView;
   var DAYS = R.timetable.days;
   var KEY = "kayitAsistani.v3", LANG_KEY = "kayitAsistani.lang";
-  var TABS = ["plan", "status", "grad", "flow", "reg"];
+  var TABS = ["home", "plan", "status", "flow", "reg", "att", "grades", "cal", "grad", "about"];
+  var MO = window.KayitMore, ICS = window.KayitICS, CU = D.current || null;
   var MAX_SOL = 600, NODE_CAP = 250000, KEEP = 50, PAGE = 6;
 
   /* ---------- dil / yardımcılar ---------- */
@@ -113,9 +114,9 @@
 
   /* ---------- durum (localStorage) ---------- */
   function defaultState() {
-    return { cart: [], fullIds: [], scenario: "", introDismissed: false, limitOverride: null, tab: "plan", sv: "elig", regDate: "",
+    return { cart: [], fullIds: [], scenario: "", introDismissed: false, limitOverride: null, tab: "home", sv: "elig", regDate: "",
       prefs: { days: true, early: false, gaps: true, free: "" },
-      rm: { expected: 2, fail: {}, mode: "" },
+      rm: { expected: 2, fail: {}, mode: "" }, gx: {}, gtarget: "D",
       flow: { status: "draft", studentNote: "", advisorNote: "", submittedAt: null, decidedAt: null } };
   }
   var isFresh = false;
@@ -136,6 +137,8 @@
         if (typeof p.regDate === "string") s.regDate = p.regDate;
         if (p.prefs && typeof p.prefs === "object") for (var k in s.prefs) if (p.prefs[k] !== undefined) s.prefs[k] = p.prefs[k];
         if (p.flow && typeof p.flow === "object") for (var f in s.flow) if (p.flow[f] !== undefined) s.flow[f] = p.flow[f];
+        if (p.gx && typeof p.gx === "object") s.gx = p.gx;
+        if (typeof p.gtarget === "string") s.gtarget = p.gtarget;
         if (p.rm && typeof p.rm === "object") {
           if (typeof p.rm.expected === "number") s.rm.expected = p.rm.expected;
           if (p.rm.fail && typeof p.rm.fail === "object") s.rm.fail = p.rm.fail;
@@ -730,6 +733,14 @@
       special: R.specialPrereqs || {}, project: kn.project, limitOverride: state.limitOverride });
   }
   function rmMode() { return state.rm.mode || (state.cart.length ? "cart" : "suggest"); }
+  function rmBundle(mode) {
+    var M = rmModel(), offered = {};
+    D.courses.forEach(function (c) { if (isOffered(c)) offered[c.code] = true; });
+    var codes = []; cartSections().forEach(function (s) { if (codes.indexOf(s.code) < 0) codes.push(s.code); });
+    var opts = { start: K.parseTerm(D.meta.term.tr) || { year: 2026, season: "G" }, offeredNow: offered, expected: state.rm.expected,
+      failNow: {}, fixedTerm0: mode === "cart" && codes.length ? codes : null };
+    return { M: M, B: K.roadmapBundle(M, opts) };
+  }
   function roadmapHtml() {
     if (!K || !RV) return "";
     var M = rmModel(), offered = {}, mode = rmMode();
@@ -998,12 +1009,14 @@
     $("cartPill").innerHTML = esc(t("hdr.cart")) + ': <strong>' + tot.count + '</strong> · <strong>' + tot.units + '</strong>/' + limit + ' ' + esc(unitName());
     $("cartPill").className = "cart-pill" + (tot.units > limit ? " over" : "");
     $("flowDot").hidden = state.flow.status !== "pending";
-    var on = LANG === "tr" ? 0 : 1, parts = $("langBtn").children;
-    parts[0].classList.toggle("on", on === 0); parts[1].classList.toggle("on", on === 1);
+    var on = LANG === "tr" ? 0 : 1;
+    Array.prototype.forEach.call(document.querySelectorAll(".lang-btn"), function (b) { b.children[0].classList.toggle("on", on === 0); b.children[1].classList.toggle("on", on === 1); });
+    var ad = attData(); $("attDot").hidden = !ad || !(ad.over + ad.warn);
   }
   function applyStatic() {
     document.documentElement.lang = LANG;
-    document.title = t("app.name") + " - " + t("app.subtitle");
+    document.title = "YaşarOBS+ - " + t("app.subtitle");
+    $("loginNo").textContent = D.student.name + " · " + D.student.no; $("loginProg").textContent = D.meta.university + " · " + D.meta.department;
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (el) { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
@@ -1024,15 +1037,16 @@
   }
   function renderIntro() { $("introCard").hidden = !!state.introDismissed; }
   function renderAll() {
-    renderHeader(); renderCourseList(); renderCartPanel(); renderTimetable(); renderAuto(); renderStatus(); renderGrad(); renderFlow(); renderReg(); renderRules();
+    renderHeader(); renderCourseList(); renderCartPanel(); renderTimetable(); renderAuto(); renderStatus(); renderGrad(); renderFlow(); renderReg(); renderRules(); renderHome(); renderAtt(); renderGrades(); renderCal(); renderAbout();
   }
   function setTab(tab, focus) {
     if (TABS.indexOf(tab) < 0) tab = "plan";
     state.tab = tab; save();
     TABS.forEach(function (n) {
       $("tab-" + n).hidden = n !== tab;
-      var b = $("t-" + n); b.setAttribute("aria-selected", n === tab ? "true" : "false"); b.tabIndex = n === tab ? 0 : -1; b.classList.toggle("active", n === tab);
+      var b = $("t-" + n); if (n === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); b.classList.toggle("active", n === tab);
     });
+    try { if (location.hash !== "#" + tab) history.replaceState(null, "", "#" + tab); } catch (e) { /* yoksay */ }
     if (focus) $("t-" + tab).focus();
     window.scrollTo(0, 0);
   }
@@ -1090,6 +1104,231 @@
     else fallback();
   }
 
+  /* =========================================================
+     YaşarOBS+ : giriş, Ana Sayfa, Devamsızlık, Notlar, Takvim, OBS'den farkı
+     ========================================================= */
+  var CUR = [];
+  var LOGIN_KEY = "yasarObsPlus.login";
+  function loggedIn() { try { return window.sessionStorage.getItem(LOGIN_KEY) === "1"; } catch (e) { return true; } }
+  function setLogin(on, initial) {
+    try { if (on) window.sessionStorage.setItem(LOGIN_KEY, "1"); else window.sessionStorage.removeItem(LOGIN_KEY); } catch (e) { /* yoksay */ }
+    $("login").hidden = !!on; $("appShell").hidden = !on;
+    if (on && !initial) { setTab("home"); }
+    if (!on) setTimeout(function () { $("loginBtn").focus(); }, 0);
+  }
+  function nowDate() { return new Date(); }
+  function pdate(s, eod) { return MO.parseLocal(s, eod); }
+  function dshort(d) { return d.toLocaleDateString(locale(), { day: "numeric", month: "short" }); }
+  function dlong(d, wd) { return d.toLocaleDateString(locale(), { weekday: wd || "short", day: "numeric", month: "long" }); }
+  function inDays(d) {
+    var a = new Date(nowDate()); a.setHours(0, 0, 0, 0); var b = new Date(d); b.setHours(0, 0, 0, 0);
+    var n = Math.round((b - a) / 864e5);
+    return n === 0 ? t("x.today") : n === 1 ? t("x.tomorrow") : n > 0 ? t("x.inDays", { n: n }) : t("x.daysAgo", { n: -n });
+  }
+  function curSecByCode(code) { return CUR.filter(function (s) { return s.code === code; })[0] || null; }
+
+  /* ---- devamsızlık (m.29(2): teorik %70, uygulama %80 devam zorunlu) ---- */
+  function attData() {
+    if (!CU) return null;
+    var W = CU.weeks, rows = Object.keys(CU.attendance).map(function (code) {
+      var c = byCode[code], u = CU.attendance[code], T = c.tul[0], P = c.tul[1];
+      function part(hours, ratio, used) {
+        if (!hours) return null;
+        var allow = Math.floor(hours * W * ratio), left = allow - used;
+        return { hours: hours, allow: allow, used: used, left: left, weeks: Math.floor(Math.max(0, left) / hours),
+          level: used > allow ? "over" : (left < hours || left <= allow * 0.25 ? "warn" : "ok") };
+      }
+      var th = part(T, CU.absence.theory, u.t), pr = part(P, CU.absence.practice, u.u);
+      var lv = [th, pr].filter(Boolean).map(function (x) { return x.level; });
+      var level = lv.indexOf("over") >= 0 ? "over" : lv.indexOf("warn") >= 0 ? "warn" : "ok";
+      return { code: code, name: courseName(code), th: th, pr: pr, level: level, retake: isFRetake(code) };
+    });
+    var ord = { over: 0, warn: 1, ok: 2 };
+    rows.sort(function (a, b) { return ord[a.level] - ord[b.level] || (a.code < b.code ? -1 : 1); });
+    return { rows: rows, over: rows.filter(function (r) { return r.level === "over"; }).length, warn: rows.filter(function (r) { return r.level === "warn"; }).length };
+  }
+  function attPartHtml(lbl, p) {
+    if (!p) return '<div class="att-part none"><span class="muted small">' + esc(lbl) + ': ' + esc(t("att.none")) + '</span></div>';
+    var pct = p.allow ? Math.min(100, p.used / p.allow * 100) : 100;
+    var msg = p.level === "over" ? t("att.overMsg") : p.left === 0 ? t("att.zeroMsg") : (p.weeks ? t("att.leftMsg", { n: p.left, w: p.weeks }) : t("att.leftLess", { n: p.left }));
+    return '<div class="att-part"><div class="totals-row"><span>' + esc(lbl) + '</span><strong>' + p.used + ' / ' + p.allow + ' ' + esc(t("att.hrs")) + '</strong></div>' +
+      '<div class="progress ' + (p.level === "over" ? "over" : "") + '"><span class="lvl-' + p.level + '" style="width:' + pct + '%"></span></div>' +
+      '<p class="small ' + (p.level === "ok" ? "muted" : "t-" + p.level) + '">' + esc(msg) + '</p></div>';
+  }
+  function renderAtt() {
+    var A = attData(); if (!A) { $("attView").innerHTML = ""; return; }
+    var html = '<div class="intro"><h2>' + esc(t("att.title")) + '</h2><p class="muted">' + esc(t("att.intro", { w: CU.weeks })) + '</p></div>';
+    if (A.over || A.warn) html += '<p class="alert ' + (A.over ? "bad" : "warn") + ' big">' + esc(A.over ? t("att.summary", { o: A.over, w: A.warn }) : t("att.summaryW", { w: A.warn })) + '</p>';
+    else html += '<p class="alert ok big">' + esc(t("att.allOk")) + '</p>';
+    html += '<div class="att-grid">' + A.rows.map(function (r) {
+      var lb = { over: ["bad", "att.b.over"], warn: ["warn", "att.b.warn"], ok: ["ok", "att.b.ok"] }[r.level], c = byCode[r.code];
+      return '<div class="card att-card lvl-' + r.level + '"><div class="card-head"><div><strong>' + esc(r.code) + '</strong> <span>' + esc(r.name) + '</span><div class="small muted">T+U ' + c.tul[0] + '+' + c.tul[1] + ' · ' + c.ects + ' ' + esc(t("unit.ects")) + '</div></div>' + badge(lb[0], t(lb[1])) + '</div>' +
+        attPartHtml(t("att.theory"), r.th) + attPartHtml(t("att.practice"), r.pr) +
+        (r.retake ? '<p class="small muted">' + esc(t("att.retakeNote")) + '</p>' : "") + '</div>';
+    }).join("") + '</div>';
+    html += '<div class="card"><h3>' + esc(t("att.howT")) + '</h3><ul class="rule-list small"><li>' + esc(t("att.how1")) + '</li><li>' + esc(t("att.how2")) + '</li><li>' + esc(t("att.how3")) + '</li></ul></div>';
+    $("attView").innerHTML = html;
+  }
+
+  /* ---- notlar: Bologna ağırlıkları + girilmiş sınavlar -> finalden gereken ---- */
+  var TARGETS = { D: 50, C: 60, B: 70, A: 80 };
+  function gradeData(code) {
+    var exams = (CU.grades[code] || []).slice(), pred = state.gx[code];
+    if (typeof pred === "number") exams.push({ name: "Midterm", score: pred, predicted: true });
+    var g = MO.gradeModel({ code: code, exams: exams }, null, TARGETS);
+    g.pred = pred; g.need = g.needs.filter(function (n) { return n.label === state.gtarget; })[0] || g.needs[0];
+    return g;
+  }
+  var COMP_LBL = { mid: "g.c.mid", quiz: "g.c.quiz", hw: "g.c.hw", practice: "g.c.practice", project: "g.c.project", part: "g.c.part", final: "g.c.final", other: "g.c.other", field: "g.c.other", pres: "g.c.other" };
+  function needText(n, g) {
+    if (!n) return "";
+    if (n.need === null) return t("g.noFinal");
+    if (n.impossible) return t("g.impossible", { l: n.label, n: Math.ceil(n.need) });
+    if (n.need <= 0) return t("g.already", { l: n.label });
+    return t("g.need", { l: n.label, n: Math.ceil(n.need) });
+  }
+  function renderGrades() {
+    if (!CU) { $("gradesView").innerHTML = ""; return; }
+    var html = '<div class="intro"><h2>' + esc(t("g.title")) + '</h2><p class="muted">' + esc(t("g.intro")) + '</p></div>';
+    html += '<div class="card g-ctrl"><label class="field inline"><span>' + esc(t("g.target")) + '</span><select id="gTarget">' + Object.keys(TARGETS).map(function (k) {
+      return '<option value="' + k + '"' + (state.gtarget === k ? " selected" : "") + '>' + k + ' (≥ ' + TARGETS[k] + ')</option>';
+    }).join("") + '</select></label><span class="muted small">' + esc(t("g.targetNote")) + '</span></div>';
+    html += '<div class="g-grid">' + Object.keys(CU.grades).map(function (code) {
+      var g = gradeData(code), c = byCode[code];
+      var h = '<div class="card g-card"><div class="card-head"><div><strong>' + esc(code) + '</strong> ' + esc(courseName(code)) + '<div class="small muted">' + c.ects + ' ' + esc(t("unit.ects")) + (isFRetake(code) ? ' · ' + esc(t("g.retake")) : "") + '</div></div>';
+      if (g.missing) return h + '</div><p class="muted small">' + esc(t("g.noWeights")) + '</p></div>';
+      var lvl = !g.need ? "ok" : g.need.impossible ? "bad" : g.need.need > 70 ? "warn" : "ok";
+      h += badge(lvl === "bad" ? "bad" : lvl === "warn" ? "warn" : "ok", needText(g.need, g)) + '</div>';
+      h += '<table class="g-table"><thead><tr><th>' + esc(t("g.th.item")) + '</th><th>' + esc(t("g.th.w")) + '</th><th>' + esc(t("g.th.score")) + '</th><th>' + esc(t("g.th.avg")) + '</th></tr></thead><tbody>' +
+        g.items.map(function (it) {
+          var nm = it.name ? (it.name === "Midterm" && g.pred !== undefined ? t("g.predMid") : it.name) : t(COMP_LBL[it.key] || "g.c.other");
+          return '<tr class="' + (it.graded ? "" : "pending") + '"><td>' + esc(nm) + '</td><td>%' + (Math.round(it.w * 10) / 10) + '</td><td>' + (it.graded ? '<strong>' + it.score + '</strong>' : '<span class="muted">-</span>') + '</td><td>' + (typeof it.classAvg === "number" ? it.classAvg : '<span class="muted">-</span>') + '</td></tr>';
+        }).join("") + '</tbody></table>';
+      h += g.gradedW === 0 ? '<p class="small muted">' + esc(t("g.nothing")) + '</p>' : '<p class="small">' + t("g.now", { p: num2(g.current), w: Math.round(g.gradedW), a: g.avg === null ? "-" : Math.round(g.avg) }) + '</p>';
+      var hasMid = g.comps.some(function (x) { return x.key === "mid"; }), midDone = (CU.grades[code] || []).some(function (e) { return MO.compKey(e.name) === "mid"; });
+      if (hasMid && !midDone) h += '<label class="field inline small g-whatif"><span>' + esc(t("g.whatif")) + '</span><input type="number" min="0" max="100" step="1" inputmode="numeric" data-gx="' + esc(code) + '" value="' + (g.pred !== undefined ? g.pred : "") + '" placeholder="' + esc(t("g.whatifPh")) + '">' +
+        (g.pred !== undefined ? '<button type="button" class="linklike" data-act="gx-clear" data-code="' + esc(code) + '">' + esc(t("g.clear")) + '</button>' : "") + '</label>';
+      h += '<div class="g-needs">' + g.needs.map(function (n) {
+        var cls = n.need === null ? "" : n.impossible ? "bad" : n.need <= 0 ? "ok" : n.need > 70 ? "warn" : "";
+        return '<span class="g-need ' + cls + '"><b>' + n.label + '</b> ' + (n.need === null ? "-" : n.impossible ? "✕" : n.need <= 0 ? "✓" : Math.ceil(n.need)) + '</span>';
+      }).join("") + '</div><p class="tiny muted">' + esc(t("g.needsLbl")) + '</p>';
+      return h + '</div>';
+    }).join("") + '</div>';
+    html += '<p class="muted small">' + esc(t("g.src")) + '</p>';
+    $("gradesView").innerHTML = html;
+  }
+
+  /* ---- takvim ---- */
+  function examLbl(type) { return t("exam." + type); }
+  function calEvents() {
+    var ev = [];
+    CU.acadcal.forEach(function (r) {
+      var s = pdate(r.start), e = pdate(r.end, true);
+      ev.push({ kind: "dl", name: L(r), start: s, end: e, single: r.start === r.end });
+    });
+    CU.exams.forEach(function (x) {
+      var s = pdate(x.date + " " + x.start);
+      ev.push({ kind: "exam", name: examLbl(x.type) + ": " + x.code + " " + courseName(x.code), start: s, end: s, room: x.room, time: x.start + "-" + x.end, type: x.type });
+    });
+    ev.sort(function (a, b) { return a.start - b.start; });
+    return ev;
+  }
+  function upcoming(limitDays) {
+    var now = nowDate(), lim = now.getTime() + (limitDays || 60) * 864e5;
+    return calEvents().filter(function (e) {
+      if (e.kind === "dl" && e.start <= now && e.end >= now) { e.ongoing = true; return true; }
+      return e.start >= now && e.start.getTime() <= lim;
+    }).map(function (e) {
+      var at = e.ongoing ? e.end : e.start;
+      return { ev: e, at: at, txt: e.ongoing ? t("cal.endsIn", { d: inDays(at) }) : inDays(at) };
+    });
+  }
+  function evRow(u) {
+    var e = u.ev;
+    return '<li class="ev ev-' + e.kind + (e.ongoing ? " ongoing" : "") + '"><span class="ev-date"><b>' + esc(dshort(u.at)) + '</b><small>' + esc(u.txt) + '</small></span><span class="ev-main"><strong>' + esc(e.name) + '</strong>' +
+      (e.kind === "exam" ? '<small class="muted">' + esc(e.time + " · " + e.room) + '</small>' : (e.single ? "" : '<small class="muted">' + esc(dshort(e.start) + " - " + dshort(e.end)) + '</small>')) + '</span></li>';
+  }
+  function downloadICS() {
+    var classes = [];
+    CUR.forEach(function (s) { s.slots.forEach(function (sl) { classes.push({ code: s.code, no: s.no, name: courseName(s.code), room: s.room, day: sl.day, start: sl.start, end: sl.end }); }); });
+    var r = ICS.build({ name: "YaşarOBS+ " + L(D.meta.term), classes: classes, range: { start: "2026-09-21", end: "2026-12-25" },
+      exams: CU.exams.map(function (x) { return { code: x.code, name: courseName(x.code), date: x.date, start: x.start, end: x.end, type: x.type, room: x.room }; }),
+      deadlines: CU.acadcal.map(function (x) { return { name: L(x), start: x.start, end: x.end }; }),
+      labels: { exam: examLbl, classDesc: "YaşarOBS+", alarmDay: t("cal.alarmDay"), alarmHour: t("cal.alarmHour"), classCat: t("cal.catClass"), examCat: t("cal.catExam"), deadlineCat: t("cal.catDl") } });
+    var blob = new Blob([r.text], { type: "text/calendar;charset=utf-8" }), url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = "yasarobs-plus-2026-guz.ics"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    toast(t("cal.done", { c: r.count.classes, e: r.count.exams, d: r.count.deadlines }));
+  }
+  function renderCal() {
+    if (!CU) { $("calView").innerHTML = ""; return; }
+    var up = upcoming(120), all = calEvents();
+    var html = '<div class="intro"><h2>' + esc(t("cal.title")) + '</h2><p class="muted">' + esc(t("cal.intro")) + '</p></div>';
+    html += '<div class="cal-layout"><div><div class="card"><div class="card-head"><h3>' + esc(t("cal.upT")) + '</h3><button type="button" class="btn primary small" data-act="ics">&#128197; ' + esc(t("cal.ics")) + '</button></div>' +
+      '<ul class="ev-list">' + up.map(evRow).join("") + '</ul><p class="muted small">' + esc(t("cal.icsNote")) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(t("cal.examT")) + '</h3><table class="g-table"><thead><tr><th>' + esc(t("cal.th.date")) + '</th><th>' + esc(t("cal.th.course")) + '</th><th>' + esc(t("cal.th.type")) + '</th><th>' + esc(t("cal.th.room")) + '</th></tr></thead><tbody>' +
+      all.filter(function (e) { return e.kind === "exam"; }).map(function (e) {
+        return '<tr><td>' + esc(dlong(e.start)) + ' <span class="muted">' + esc(e.time) + '</span></td><td>' + esc(e.name.split(": ")[1]) + '</td><td>' + esc(examLbl(e.type)) + '</td><td>' + esc(e.room) + '</td></tr>';
+      }).join("") + '</tbody></table><p class="muted tiny">' + esc(t("cal.sample")) + '</p></div></div>';
+    html += '<div><div class="card"><h3>' + esc(t("cal.weekT")) + '</h3><div class="tt-scroll">' + ttHtml(CUR.map(function (s) { return { sec: s, kind: "ok" }; }), false) + '</div></div></div></div>';
+    $("calView").innerHTML = html;
+  }
+
+  /* ---- Ana Sayfa ---- */
+  function renderHome() {
+    if (!CU || !CUR) { $("homeView").innerHTML = ""; return; }
+    var st = standing(), gp = gpa(), earned = earnedEcts(), tot = R.graduation.totalEcts, rb = null;
+    try { rb = rmBundle("suggest"); } catch (e) { rb = null; }
+    var grad = rb && rb.B.res.gradIndex !== null ? L(rb.B.res.gradLabel) : "-";
+    var todo = [];
+    var chk = runChecks();
+    if (state.cart.length) todo.push({ lv: chk.errors ? "bad" : chk.warns ? "warn" : "ok", txt: chk.errors ? t("home.t.cart", { e: chk.errors, w: chk.warns }) : chk.warns ? t("home.t.cartW", { w: chk.warns }) : t("home.t.cartOk"), tab: "flow" });
+    var fr = D.courses.filter(function (c) { return c.type === "zorunlu" && attempts[c.code] && !passed[c.code]; }).map(function (c) { return c.code; });
+    if (fr.length) todo.push({ lv: "warn", txt: t("home.t.failed", { l: fr.join(", ") }), tab: "grad" });
+    var A = attData();
+    A.rows.filter(function (r) { return r.level !== "ok"; }).forEach(function (r) {
+      var p = r.th && r.th.level !== "ok" ? r.th : r.pr;
+      todo.push({ lv: r.level === "over" ? "bad" : "warn", txt: r.level === "over" ? t("home.t.attOver", { c: r.code }) : (p.left > 0 ? t("home.t.att", { c: r.code, n: p.left }) : t("home.t.attZero", { c: r.code })), tab: "att" });
+    });
+    Object.keys(CU.grades).forEach(function (code) {
+      var g = gradeData(code), n = g.needs[0];
+      if (n && n.need !== null && (n.impossible || n.need > 60)) todo.push({ lv: n.impossible ? "bad" : "warn", txt: t("home.t.grade", { c: code, n: Math.ceil(n.need) }), tab: "grades" });
+    });
+    var up = upcoming(45);
+    if (up.length) todo.push({ lv: "info", txt: t("home.t.next", { n: up[0].ev.name, d: up[0].txt }), tab: "cal" });
+    var html = '<div class="home-hello"><div><h2>' + esc(t("home.hello", { n: D.student.name })) + '</h2><p class="muted">' + esc(D.meta.department + " · " + L(D.meta.term) + " · " + t("home.advisor") + ": " + D.student.advisor) + '</p></div>' +
+      '<span class="muted small">' + esc(dlong(nowDate(), "long")) + '</span></div>';
+    html += '<div class="stat-grid">' +
+      '<button type="button" class="card stat tile" data-act="goto" data-tab="grad"><span class="muted small">' + esc(t("home.s.gpa")) + '</span><span class="stat-n ' + (gp < 2 ? "t-bad" : "") + '">' + num2(gp) + '</span><span class="small muted">' + esc(L(st.label)) + '</span></button>' +
+      '<button type="button" class="card stat tile" data-act="goto" data-tab="grad"><span class="muted small">' + esc(t("home.s.ects")) + '</span><span class="stat-n">' + earned + '<small> / ' + tot + '</small></span><div class="progress"><span style="width:' + Math.round(earned / tot * 100) + '%"></span></div></button>' +
+      '<button type="button" class="card stat tile" data-act="goto" data-tab="plan"><span class="muted small">' + esc(t("home.s.limit")) + '</span><span class="stat-n">' + limitNow() + '<small> ' + esc(unitName()) + '</small></span><span class="small muted">' + esc(t("home.s.limitNote")) + '</span></button>' +
+      '<button type="button" class="card stat tile" data-act="goto" data-tab="grad"><span class="muted small">' + esc(t("home.s.grad")) + '</span><span class="stat-n sm">' + esc(grad) + '</span><span class="small muted">' + esc(rb ? t("home.s.gradNote", { n: rb.B.res.termsLeft }) : "") + '</span></button></div>';
+    html += '<div class="home-grid"><div class="card"><h3>' + esc(t("home.todoT")) + '</h3><p class="muted small">' + esc(t("home.todoP")) + '</p><ul class="todo">' + todo.map(function (x) {
+      return '<li class="todo-' + x.lv + '"><span class="dot" aria-hidden="true"></span><span>' + esc(x.txt) + '</span><button type="button" class="btn small ghost" data-act="goto" data-tab="' + x.tab + '">' + esc(t("home.open")) + ' &rarr;</button></li>';
+    }).join("") + '</ul></div>';
+    html += '<div class="card"><div class="card-head"><h3>' + esc(t("home.weekT")) + '</h3><button type="button" class="btn small ghost" data-act="goto" data-tab="cal">' + esc(t("home.cal")) + '</button></div>' +
+      ttHtml(CUR.map(function (s) { return { sec: s, kind: "ok" }; }), true) +
+      '<ul class="ev-list compact">' + up.slice(0, 4).map(evRow).join("") + '</ul></div></div>';
+    $("homeView").innerHTML = html;
+  }
+
+  /* ---- OBS'den farkı ---- */
+  var DIFF = [
+    ["d.conf", "plan"], ["d.pre", "status"], ["d.quota", "plan"], ["d.limit", "plan"], ["d.adv", "flow"], ["d.day", "reg"],
+    ["d.grad", "grad"], ["d.att", "att"], ["d.grade", "grades"], ["d.cal", "cal"], ["d.home", "home"], ["d.lang", "home"]
+  ];
+  function renderAbout() {
+    var html = '<div class="intro"><h2>' + esc(t("ab.title")) + '</h2><p class="muted">' + esc(t("ab.intro")) + '</p></div>';
+    html += '<div class="card"><table class="diff"><thead><tr><th>' + esc(t("ab.th.p")) + '</th><th>' + esc(t("ab.th.obs")) + '</th><th>YaşarOBS+</th></tr></thead><tbody>' + DIFF.map(function (d) {
+      return '<tr><th scope="row">' + esc(t(d[0] + ".p")) + '</th><td>' + esc(t(d[0] + ".o")) + '</td><td>' + esc(t(d[0] + ".n")) + ' <button type="button" class="linklike" data-act="goto" data-tab="' + d[1] + '">' + esc(t("ab.try")) + '</button></td></tr>';
+    }).join("") + '</tbody></table></div>';
+    html += '<div class="ab-grid"><div class="card"><h3>' + esc(t("ab.dataT")) + '</h3><ul class="rule-list small">' + R.sources.map(function (s) { return '<li><a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(L(s)) + '</a></li>'; }).join("") +
+      '<li><a href="' + esc(R.source.url) + '" target="_blank" rel="noopener">' + esc(L(R.source)) + '</a></li><li>' + esc(t("ab.bologna")) + '</li></ul><p class="small muted">' + esc(t("ab.fake")) + '</p></div>';
+    html += '<div class="card"><h3>' + esc(t("ab.howT")) + '</h3><ul class="rule-list small"><li>' + esc(t("ab.h1")) + '</li><li>' + esc(t("ab.h2")) + '</li><li>' + esc(t("ab.h3")) + '</li><li>' + esc(t("ab.h4")) + '</li></ul></div>';
+    html += '<div class="card"><h3>' + esc(t("ab.extT")) + '</h3><p class="small">' + esc(t("ab.ext")) + '</p><div class="btn-row"><a class="btn small primary" href="demo-obs/?dev=1">' + esc(t("ab.extDemo")) + '</a><a class="btn small ghost" href="extension.zip" download>' + esc(t("ab.extDl")) + '</a></div></div></div>';
+    $("aboutView").innerHTML = html;
+  }
+
   /* ---------- olaylar ---------- */
   document.addEventListener("click", function (e) {
     var el = e.target.closest("[data-act]"); if (!el) return;
@@ -1101,6 +1340,11 @@
       case "add-retakes": addRetakes(); break;
       case "intro-close": state.introDismissed = true; save(); renderIntro(); break;
       case "goto-plan": setTab("plan"); break;
+      case "goto": setTab(el.getAttribute("data-tab")); break;
+      case "login": setLogin(true); break;
+      case "logout": setLogin(false); break;
+      case "ics": downloadICS(); break;
+      case "gx-clear": delete state.gx[el.getAttribute("data-code")]; save(); renderGrades(); renderHome(); break;
       case "rm-fail": {
         var fc = el.getAttribute("data-code");
         if (state.rm.fail[fc]) delete state.rm.fail[fc]; else state.rm.fail[fc] = true;
@@ -1172,6 +1416,12 @@
   document.addEventListener("change", function (e) {
     if (e.target.id === "regDate") { state.regDate = e.target.value; save(); updateCountdown(); }
     var rmk = e.target.getAttribute && e.target.getAttribute("data-rm");
+    if (e.target.getAttribute && e.target.getAttribute("data-gx")) {
+      var gc = e.target.getAttribute("data-gx"), gv = parseFloat(e.target.value);
+      if (isFinite(gv) && gv >= 0 && gv <= 100) state.gx[gc] = gv; else delete state.gx[gc];
+      save(); renderGrades(); renderHome();
+    }
+    if (e.target.id === "gTarget") { state.gtarget = e.target.value; save(); renderGrades(); renderHome(); }
     if (rmk === "grade") { state.rm.expected = parseFloat(e.target.value) || 2; save(); renderGrad(); }
     if (rmk === "mode") { state.rm.mode = e.target.value; state.rm.fail = {}; save(); renderGrad(); }
   });
@@ -1180,14 +1430,18 @@
   tabsRow.addEventListener("click", function (e) { var b = e.target.closest("[data-tab]"); if (b) setTab(b.getAttribute("data-tab")); });
   tabsRow.addEventListener("keydown", function (e) {
     var i = TABS.indexOf(state.tab), n = null;
-    if (e.key === "ArrowRight") n = TABS[(i + 1) % TABS.length]; else if (e.key === "ArrowLeft") n = TABS[(i + TABS.length - 1) % TABS.length];
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") n = TABS[(i + 1) % TABS.length]; else if (e.key === "ArrowLeft" || e.key === "ArrowUp") n = TABS[(i + TABS.length - 1) % TABS.length];
     else if (e.key === "Home") n = TABS[0]; else if (e.key === "End") n = TABS[TABS.length - 1];
     if (n) { setTab(n, true); e.preventDefault(); }
   });
 
   /* ---------- başlangıç ---------- */
+  CUR = buildBalanced(Object.keys(CU ? CU.attendance : {})).map(function (id) { return secById[id]; });
   applyStatic();
-  if (isFresh) { state.tab = "plan"; applyScenario("balanced", true); } else renderAll();
-  setTab(state.tab);
+  if (isFresh) { state.tab = "home"; applyScenario("balanced", true); } else renderAll();
+  var h0 = (location.hash || "").slice(1);
+  setTab(TABS.indexOf(h0) >= 0 ? h0 : state.tab);
+  window.addEventListener("hashchange", function () { var h = location.hash.slice(1); if (TABS.indexOf(h) >= 0 && h !== state.tab) setTab(h); });
+  setLogin(/[?&]login=1/.test(location.search) ? true : loggedIn(), true);
   regTimer = setInterval(updateCountdown, 30000);
 })();

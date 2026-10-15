@@ -1,3 +1,28 @@
+# YaşarOBS+
+
+**Öğrenci Bilgi Sistemi, yeniden tasarlandı.** GenAI (ENGR 4451) dersi ödevi: OBS'ye benzeyen ama öğrencinin en sık yaşadığı sorunları (özellikle ders kaydı) doğrudan çözen alternatif bir OBS. TR/EN.
+
+- **Canlı demo (kurulum yok):** <https://boraykaskavalci.github.io/kayit-asistani/> → "Demo öğrenci olarak giriş yap"
+- Doğrudan bir sayfa: `#home`, `#plan`, `#status`, `#flow`, `#reg`, `#att`, `#grades`, `#cal`, `#grad`, `#about`
+- **İnternetsiz:** depoyu indirip `index.html`'i açmak yeterli (sunucu gerekmez).
+
+| Menü | Ne yapıyor (OBS'den farkı) |
+|---|---|
+| Ana Sayfa | GNO/statü, AKTS limiti, en erken mezuniyet ve "dikkat etmen gerekenler" listesi tek ekranda |
+| Ders Seç & Program | Canlı haftalık program; çakışma eklemeden önce görünür; izinli tekrar dersi çakışması (m.29/4); çakışmasız program üretici |
+| Ön Koşul & Kontenjan | "Alabileceklerim", gerekçeli "alamazsın", dolu şube için yedekler |
+| Danışman Onayı | Kontrol sonuçlarıyla özet, onay/ret akışı |
+| Kayıt Günü Planı | Plan A/B/C, "X doluysa Y" kuralları, geri sayım, yazdır |
+| Devamsızlık | Kalan hak (teorik %30 / uygulama %20), NA uyarısı |
+| Notlar & Final Hesabı | OBS Bologna ağırlıklarıyla puan; her harf için finalden gereken not; ara sınav "ya şunu alırsam?" |
+| Takvim & Sınavlar | Akademik takvim + sınavlar + program tek ekranda; .ics ile telefona (hatırlatmalı) |
+| Mezuniyet Yol Haritası | En erken mezuniyet, kritik dersler, "ya kalırsam?", GNO hedefi |
+| OBS'den farkı | Sorun / bugün OBS / YaşarOBS+ karşılaştırması |
+
+Bonus: aynı kural motoru **gerçek OBS'nin içinde çalışan bir Chrome eklentisi** olarak da var (aşağıda "Kayıt Asistanı").
+
+---
+
 # Kayıt Asistanı
 
 **OBS ders kaydı için akıllı yardımcı** - üniversitenin öğrenci bilgi sistemi **OBS'nin içinde** çalışan bir Chrome eklentisi ve onunla aynı kural motorunu kullanan, kurulum gerektirmeyen bir web planlayıcı. TR/EN dilli; GenAI dersi dönem ödevidir. Hocamızın isteği doğrultusunda hedef, **OBS'ye benzeyen ve kayıt sorunlarını doğrudan hedefleyen** bir çözümdür.
