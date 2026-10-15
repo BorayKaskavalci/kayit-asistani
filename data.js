@@ -214,8 +214,8 @@
       faculty: "Mühendislik Fakültesi",
       department: "Makine Mühendisliği",
       term: { tr: "2026-2027 Güz", en: "2026-2027 Fall" },
-      /* Grup üyeleri: TEK YERDEN düzenlenir (alt bilgide görünür; README'ye de aynısını yazın) */
-      group: ["Üye 1 (ad soyad - öğrenci no)", "Üye 2 (ad soyad - öğrenci no)", "Üye 3 (ad soyad - öğrenci no)"]
+      /* Bireysel ödev: hazırlayan adı buraya yazılırsa alt bilgide görünür */
+      group: []
     },
 
     rules: {

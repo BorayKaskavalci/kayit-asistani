@@ -150,7 +150,7 @@ Derleme yok, bağımlılık yok.
 | `index.html` | Sayfa iskeleti |
 | `style.css` | Tasarım, açık/koyu tema, yazdırma stili |
 | `app.js` | Uygulama mantığı (çakışma, ön koşul, çözücü, sekmeler) |
-| `data.js` | Katalog, kurallar, öğrenci profili, grup üyeleri |
+| `data.js` | Katalog, kurallar, öğrenci profili |
 | `i18n.js` | TR/EN arayüz metinleri |
 | `extension/` | Chrome eklentisi (MV3) - ayrıntı: `extension/README.md`; ortak motor `extension/lib/kayit-core.js` |
 | `extension.zip` | Kurulabilir eklenti paketi (`python3 tools/build_extension.py` üretir) |
@@ -173,12 +173,6 @@ Derleme yok, bağımlılık yok.
 - Danışmana gerçek e-posta/bildirim, birden çok bölüm ve çift anadal desteği.
 - Takvim (iCal) dışa aktarımı.
 
-## Grup üyeleri
+## Hazırlayan
 
-<!-- Aynı listeyi data.js içindeki meta.group dizisine de yazın (alt bilgide görünür). -->
-
-- Üye 1 (ad soyad - öğrenci no)
-- Üye 2 (ad soyad - öğrenci no)
-- Üye 3 (ad soyad - öğrenci no)
-
-Ders: GenAI - Öğretim görevlisi: (yazınız)
+Bireysel ödev (ENGR 4451 GenAI, 2026-2027 Güz).
