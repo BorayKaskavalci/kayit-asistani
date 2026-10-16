@@ -132,17 +132,19 @@
         var item = { code: code, name: lt[1] || "", zs: zsI >= 0 ? lt[zsI] : "", credits: nums.length > 1 ? nums[0] : null,
           ects: nums.length ? nums[nums.length - 1] : 0, semester: sem, semLabel: head, taken: null, state: "none" };
         /* sağ yarı: alınan ders */
-        var rt = R.map(txt), taken = { term: "", code: "", name: "", grade: "" };
+        var rt = R.map(txt), taken = { term: "", code: "", name: "", grade: "" }, codeIdx = -1, zsR = -1;
         rt.forEach(function (s, idx) {
           if (!taken.term && /^\[?\d{2}-\d{2}[A-ZÇĞİÖŞÜ]?\]?$/.test(s)) { taken.term = s.replace(/[\[\]]/g, ""); return; }
           var nc = K.normCode(s);
-          if (!taken.code && CODE_RE.test(nc)) { taken.code = nc; taken.name = rt[idx + 1] || ""; return; }
+          if (!taken.code && CODE_RE.test(nc)) { taken.code = nc; taken.name = rt[idx + 1] || ""; codeIdx = idx; return; }
         });
+        /* sağ yarıdaki Z/S (zorunlu/seçmeli) sütunu not değildir: gerçek OBS'de "mob-hide-z" sınıflı hücre */
+        R.forEach(function (c, idx) { if (zsR < 0 && idx > codeIdx && /^[ZS]$/.test(rt[idx]) && (/mob-hide-z/.test(c.className || "") || codeIdx >= 0)) zsR = idx; });
         var gradeEl = halves[1] ? halves[1].querySelector(".harf, .grade, [id*='lblHarf'], [id*='Harf']") : null;
         var gtxt = gradeEl ? K.upperTr(txt(gradeEl)) : "";
         if (!GRADE_RE.test(gtxt)) {
           gtxt = "";
-          for (var j = rt.length - 1; j >= 0; j--) { var u = K.upperTr(rt[j]).replace(/[^A-Z+\-]/g, ""); if (u && GRADE_RE.test(u) && rt[j].length <= 5 && !CODE_RE.test(rt[j])) { gtxt = u; break; } }
+          for (var j = rt.length - 1; j >= 0; j--) { if (j === zsR || /mob-hide-z/.test((R[j] && R[j].className) || "")) continue; var u = K.upperTr(rt[j]).replace(/[^A-Z+\-]/g, ""); if (u && GRADE_RE.test(u) && rt[j].length <= 5 && !CODE_RE.test(rt[j])) { gtxt = u; break; } }
         }
         taken.grade = gtxt;
         var ok = halves[1] && halves[1].querySelector(".fa-check-circle, .text-success");

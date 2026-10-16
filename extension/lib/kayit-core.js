@@ -311,9 +311,12 @@
      ===================================================================== */
   K.checkRegistration = function (M, rows, env) {
     var out = rows.map(function (r, i) { return { index: i, code: r.code, no: r.no, issues: [] }; });
-    var secs = [], selected = {};
+    var secs = [], selected = {}, obsRetake = {};
     rows.forEach(function (r, i) {
       selected[M.key(r.code)] = true;
+      /* OBS "Alış: Alttan" diyorsa ama müfredatta yalnızca bu dönemki alış görünüyorsa (eski not yok),
+         OBS'nin işaretine güvenilir: tekrar dersi sayılır (m.29/4 çakışma istisnası; NA ise geçerli değildir) */
+      if (/alttan/i.test(r.alis || "") && !M.passed(r.code) && !M.failed(r.code)) obsRetake[r.code] = true;
       var s = env.sectionFor ? env.sectionFor(r.code, r.no) : null;
       if (s) secs.push({ sec: s, i: i }); else if (env.sectionFor && !r.noTime) out[i].issues.push({ type: "noTime", level: "info" });
     });
@@ -322,7 +325,8 @@
       if (secs[a].sec.code === secs[b].sec.code) continue;
       var o = K.overlaps(secs[a].sec, secs[b].sec);
       if (!o.length) continue;
-      var soft = M.isSoft(secs[a].sec.code, secs[b].sec.code);
+      var ca = secs[a].sec.code, cb = secs[b].sec.code;
+      var soft = M.isSoft(ca, cb) || (obsRetake[ca] && !obsRetake[cb] && M.isFirstTime(cb)) || (obsRetake[cb] && !obsRetake[ca] && M.isFirstTime(ca));
       out[secs[a].i].issues.push({ type: soft ? "conflictSoft" : "conflict", level: soft ? "warn" : "error", other: secs[b].sec.code, otherNo: secs[b].sec.no, at: o[0] });
       out[secs[b].i].issues.push({ type: soft ? "conflictSoft" : "conflict", level: soft ? "warn" : "error", other: secs[a].sec.code, otherNo: secs[a].sec.no, at: o[0] });
     }
@@ -330,14 +334,21 @@
     rows.forEach(function (r, i) {
       M.prereqStatus(r.code, selected).forEach(function (p) {
         if (p.state === "ok") return;
-        out[i].issues.push(p.special ? { type: "special", level: "error", p: p } : { type: "prereq", level: "error", p: p });
+        if (p.special) {
+          /* müfredatta hiç alınmamış görünen (eski müfredat eşdeğeri / intibak olabilir) veya şu an tekrar alınan
+             dersler yüzünden eksikse ve AKTS yeterliyse: kesin hata değil, danışmanla teyit edilecek uyarı */
+          var untaken = (p.miss || []).filter(function (c) { var r = M.rec(c); return !r || !r.state || r.state === "none"; });
+          var ongoing = (p.miss || []).filter(function (c) { return M.ongoing(c) || !!obsRetake[c] || !!selected[M.key(c)]; });
+          var soft = p.e >= p.m && (p.miss || []).length > 0 && untaken.length + ongoing.length >= p.miss.length;
+          out[i].issues.push({ type: "special", level: soft ? "warn" : "error", p: p, untaken: untaken, ongoing: ongoing, soft: soft });
+        } else out[i].issues.push({ type: "prereq", level: "error", p: p });
       });
       var alttan = /alttan/i.test(r.alis || "");
       if (M.passed(r.code) && !M.improvable(r.code)) out[i].issues.push({ type: "repeat", level: "warn", grade: M.grade(r.code) });
       else if (M.improvable(r.code)) out[i].issues.push({ type: "improve", level: "info", grade: M.grade(r.code) });
       else if (M.failed(r.code) && !alttan) out[i].issues.push({ type: "retakeNotMarked", level: "info", grade: M.grade(r.code) });
       else if (alttan && !M.failed(r.code) && !M.passed(r.code)) out[i].issues.push({ type: "alttanUnknown", level: "info" });
-      if (M.failed(r.code)) out[i].retake = true;
+      if (M.failed(r.code) || obsRetake[r.code]) out[i].retake = true;
     });
     var global = [];
     var total = 0; rows.forEach(function (r) { total += r.ects || 0; });

@@ -56,7 +56,9 @@
       case "special":
         return t("x.iss.special", { c: row ? row.code : "", m: p.m, e: p.e, s: p.sems }) +
           (p.e < p.m ? " " + t("x.iss.specialEcts", { k: p.m - p.e }) : "") +
-          (p.miss && p.miss.length ? " " + t("x.iss.specialMiss", { l: p.miss.join(", ") }) : "");
+          (p.miss && p.miss.length ? " " + t("x.iss.specialMiss", { l: p.miss.join(", ") }) : "") +
+          (is.soft && is.untaken && is.untaken.length ? " " + t("x.iss.specialUntaken", { l: is.untaken.join(", ") }) : "") +
+          (is.soft && is.ongoing && is.ongoing.length ? " " + t("x.iss.specialOngoing", { l: is.ongoing.join(", ") }) : "");
       case "repeat": return t("x.iss.repeat", { g: is.grade || "-" });
       case "improve": return t("x.iss.improve", { g: is.grade || "-" });
       case "retakeNotMarked": return t("x.iss.retakeNotMarked", { g: is.grade || "-" });
