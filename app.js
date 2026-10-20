@@ -1167,6 +1167,7 @@
           level: used > allow ? "over" : (left < hours || left <= allow * 0.25 ? "warn" : "ok") };
       }
       var th, pr;
+      if (u.free) return { code: code, name: courseName(code), th: null, pr: null, level: "free", retake: isFRetake(code), free: true };
       if (u.allowT !== undefined && u.allowT !== null) {   /* gerçek veri: sınır OBS'den */
         var hrs = u.hoursT || T || 1, left0 = u.allowT - u.t;
         th = { hours: hrs, allow: u.allowT, used: u.t, left: left0, weeks: Math.floor(Math.max(0, left0) / hrs),
@@ -1177,7 +1178,7 @@
       var level = lv.indexOf("over") >= 0 ? "over" : lv.indexOf("warn") >= 0 ? "warn" : "ok";
       return { code: code, name: courseName(code), th: th, pr: pr, level: level, retake: isFRetake(code) };
     });
-    var ord = { over: 0, warn: 1, ok: 2 };
+    var ord = { over: 0, warn: 1, ok: 2, free: 3 };
     rows.sort(function (a, b) { return ord[a.level] - ord[b.level] || (a.code < b.code ? -1 : 1); });
     return { rows: rows, over: rows.filter(function (r) { return r.level === "over"; }).length, warn: rows.filter(function (r) { return r.level === "warn"; }).length };
   }
@@ -1195,9 +1196,10 @@
     if (A.over || A.warn) html += '<p class="alert ' + (A.over ? "bad" : "warn") + ' big">' + esc(A.over ? t("att.summary", { o: A.over, w: A.warn }) : t("att.summaryW", { w: A.warn })) + '</p>';
     else html += '<p class="alert ok big">' + esc(t("att.allOk")) + '</p>';
     html += '<div class="att-grid">' + A.rows.map(function (r) {
-      var lb = { over: ["bad", "att.b.over"], warn: ["warn", "att.b.warn"], ok: ["ok", "att.b.ok"] }[r.level], c = byCode[r.code];
+      var lb = { over: ["bad", "att.b.over"], warn: ["warn", "att.b.warn"], ok: ["ok", "att.b.ok"], free: ["ok", "att.b.free"] }[r.level], c = byCode[r.code], cu = CU.attendance[r.code] || {};
       return '<div class="card att-card lvl-' + r.level + '"><div class="card-head"><div><strong>' + esc(r.code) + '</strong> <span>' + esc(r.name) + '</span><div class="small muted">T+U ' + c.tul[0] + '+' + c.tul[1] + ' · ' + c.ects + ' ' + esc(t("unit.ects")) + '</div></div>' + badge(lb[0], t(lb[1])) + '</div>' +
-        (CU.attendance[r.code].single ? attPartHtml(t("att.total"), r.th) : attPartHtml(t("att.theory"), r.th) + attPartHtml(t("att.practice"), r.pr)) +
+        (r.free ? '<p class="small muted">' + esc(t("att.freeMsg")) + '</p>' : cu.single ? attPartHtml(t("att.total"), r.th) : attPartHtml(t("att.theory"), r.th) + attPartHtml(t("att.practice"), r.pr)) +
+        (cu.status === "noEntry" ? '<p class="small muted">' + esc(t("att.noEntry")) + '</p>' : "") +
         (r.retake ? '<p class="small muted">' + esc(t("att.retakeNote")) + '</p>' : "") + '</div>';
     }).join("") + '</div>';
     html += '<div class="card"><h3>' + esc(t("att.howT")) + '</h3><ul class="rule-list small"><li>' + esc(t("att.how1")) + '</li><li>' + esc(t("att.how2")) + '</li><li>' + esc(t("att.how3")) + '</li></ul></div>';
@@ -1320,7 +1322,7 @@
     var fr = D.courses.filter(function (c) { return c.type === "zorunlu" && attempts[c.code] && !passed[c.code]; }).map(function (c) { return c.code; });
     if (fr.length) todo.push({ lv: "warn", txt: t("home.t.failed", { l: fr.join(", ") }), tab: "grad" });
     var A = attData();
-    A.rows.filter(function (r) { return r.level !== "ok"; }).forEach(function (r) {
+    A.rows.filter(function (r) { return r.level === "over" || r.level === "warn"; }).forEach(function (r) {
       var p = r.th && r.th.level !== "ok" ? r.th : r.pr;
       todo.push({ lv: r.level === "over" ? "bad" : "warn", txt: r.level === "over" ? t("home.t.attOver", { c: r.code }) : (p.left > 0 ? t("home.t.att", { c: r.code, n: p.left }) : t("home.t.attZero", { c: r.code })), tab: "att" });
     });

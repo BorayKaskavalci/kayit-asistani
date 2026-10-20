@@ -19,7 +19,9 @@
   function hm(m) { return pad(Math.floor(m / 60)) + ":" + pad(m % 60); }
   function titleTr(s) {
     return String(s || "").toLocaleLowerCase("tr-TR").replace(/(^|[\s(\-\/])(\S)/g, function (m, a, b) { return a + b.toLocaleUpperCase("tr-TR"); })
-      .replace(/\b(Ve|İle|İçin|Ii|Iii|Iv)\b/g, function (w) { return { "Ve": "ve", "İle": "ile", "İçin": "için", "Ii": "II", "Iii": "III", "Iv": "IV" }[w]; });
+      .replace(/(^|\s)(Ve|İle|İçin)(?=\s|$)/g, function (m, a, w) { return a + w.toLocaleLowerCase("tr-TR"); })
+      .replace(/(^|\s)I(ı{1,2})(?=[\s,.)]|$)/g, function (m, a, r) { return a + "I" + r.replace(/ı/g, "I"); })
+      .replace(/(^|\s)Iv(?=[\s,.)]|$)/g, "$1IV");
   }
   var REAL_CODE = /^[A-ZÇĞİÖŞÜ]{2,6} \d{3,4}[A-Z]?$/;
   function manualList() { try { var a = JSON.parse(ls(true, MAN_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
@@ -48,7 +50,7 @@
     function course(code, o) {
       if (byCode[code]) return byCode[code];
       var b = byBase[code] || null, cr = o.credits || (b ? b.credits : 0);
-      var c = { code: code, nameTr: o.name ? titleTr(o.name) : (b ? b.nameTr : code), nameEn: b ? b.nameEn : (o.name ? titleTr(o.name) : code),
+      var c = { code: code, nameTr: b ? b.nameTr : (o.name ? titleTr(o.name) : code), nameEn: b ? b.nameEn : (o.name ? titleTr(o.name) : code),
         tul: b ? b.tul : [Math.round(cr) || 0, 0, 0], ects: o.ects || (b ? b.ects : 0), credits: cr, type: o.type || "zorunlu",
         semester: o.semester || (b ? b.semester : 0), prereq: b ? b.prereq.slice() : [], prereqVerified: !!b, sections: secMap[code] || [] };
       if (o.cat) c.cat = o.cat;
@@ -133,10 +135,11 @@
     if (!regSecs.length && d.mytimetable && d.mytimetable.sections) d.mytimetable.sections.forEach(function (s) { if (byCode[s.code]) regSecs.push(s.code + "#" + s.no); });
     var att = {};
     ((d.attendance && d.attendance.rows) || []).forEach(function (r) {
-      if (!byCode[r.code] || r.status !== "ok") return;
+      if (!byCode[r.code] || ["ok", "noEntry", "notRequired"].indexOf(r.status) < 0) return;
       var th = r.limit && r.limit.theory, pr = r.limit && r.limit.practice;
+      if (r.status === "notRequired") { att[r.code] = { t: 0, allowT: null, free: true, single: true, status: r.status }; return; }
       /* OBS toplam devamsızlık saatini verir (teorik/uygulama ayrımı yok): temkinli olarak teorik sınırla karşılaştırılır */
-      att[r.code] = { t: r.used || 0, allowT: th && th.hours ? th.max : (pr ? pr.max : null), hoursT: th && th.hours ? th.hours / ((r.limit.weeks) || 14) : null, single: true };
+      att[r.code] = { t: typeof r.used === "number" ? r.used : 0, allowT: th && th.hours ? th.max : (pr ? pr.max : null), hoursT: th && th.hours ? th.hours / ((r.limit.weeks) || 14) : null, single: true, status: r.status };
     });
     var grades = {};
     ((d.grades && d.grades.rows) || []).forEach(function (r) {
