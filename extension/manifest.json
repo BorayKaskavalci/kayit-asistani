@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Kayıt Asistanı – OBS",
   "short_name": "Kayıt Asistanı",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "OBS'de ders kaydı, devamsızlık, not hesabı ve takvim yardımcısı: çakışma, ön koşul, AKTS limiti, Plan A/B/C, mezuniyet yol haritası.",
   "icons": {
     "16": "icons/icon16.png",
@@ -28,7 +28,7 @@
     {
       "matches": [
         "https://obs.yasar.edu.tr/oibs/*",
-        "https://boraykaskavalci.github.io/kayit-asistani/demo-obs/*",
+        "https://boraykaskavalci.github.io/kayit-asistani/*",
         "http://localhost/*",
         "http://127.0.0.1/*"
       ],

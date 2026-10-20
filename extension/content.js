@@ -13,6 +13,22 @@
   var OBS = window.KayitOBS, X = window.KayitExt, KP = window.KayitPanel, MO = window.KayitMore;
   if (!OBS || !X || !KP || typeof chrome === "undefined" || !chrome.runtime || !chrome.storage) return;
 
+  /* 0) YaşarOBS+ köprüsü: eklentinin kendi sitesinde (demo OBS dışı) panel kurulmaz; yalnızca sayfa İSTERSE
+     toplanan OBS verisi aynı sayfaya verilir (window.postMessage, yalnız aynı köken). Ağ isteği yoktur. */
+  var isSite = (/^https:\/\/boraykaskavalci\.github\.io\/kayit-asistani\//.test(location.href) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(location.href)) &&
+    !/\/demo-obs\//.test(location.pathname) && !/\/extension\//.test(location.pathname);
+  if (isSite) {
+    if (window.top !== window) return;
+    window.addEventListener("message", function (e) {
+      if (e.source !== window || !e.data || e.data.type !== "yobs:request") return;
+      chrome.storage.local.get("ka.data").then(function (o) {
+        window.postMessage({ type: "yobs:data", data: o["ka.data"] || null, version: chrome.runtime.getManifest().version }, location.origin);
+      }).catch(function () { window.postMessage({ type: "yobs:data", data: null }, location.origin); });
+    });
+    window.postMessage({ type: "yobs:hello", version: chrome.runtime.getManifest().version }, location.origin);
+    return;
+  }
+
   /* Demo sayfası ?dev=1 ile açıldıysa sayfanın kendi geliştirici yükleyicisi (extension/dev/loader.js) çalışır;
      yüklü gerçek eklenti ikinci bir panel açmasın diye çekilir. */
   var devPage = false;
