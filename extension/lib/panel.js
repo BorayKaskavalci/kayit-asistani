@@ -359,6 +359,7 @@
       if (C.data.registration) next.push(btn("tab", t("x.d.goCheck"), ' data-tab="check"', "primary"));
       if (C.M.hasCurriculum) next.push(btn("tab", t("x.d.goElig"), ' data-tab="elig"'));
       if (C.M.hasCurriculum) next.push(btn("tab", t("x.d.goRoad"), ' data-tab="roadmap"'));
+      if (C.M.hasCurriculum || C.data.registration) next.push(btn("open-site", t("x.d.openSite"), "", "primary"));
       if (next.length) html += card('<h3>' + esc(t("x.d.nextT")) + '</h3><div class="ka-btns">' + next.join("") + '</div>');
 
       /* gizlilik */
@@ -742,6 +743,7 @@
         case "close": u.open = false; break;
         case "tab": u.tab = el.getAttribute("data-tab"); u.open = true; break;
         case "lang": u.lang = u.lang === "tr" ? "en" : "tr"; t = makeT(u.lang); break;
+        case "open-site": window.open("https://boraykaskavalci.github.io/kayit-asistani/?import=ext", "_blank", "noopener"); return;
         case "clear": P.clearArm = true; render(); return;
         case "clear-no": P.clearArm = false; render(); return;
         case "clear-yes":
