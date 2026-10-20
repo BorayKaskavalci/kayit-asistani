@@ -389,3 +389,18 @@ details { margin-top: 10px; } summary { cursor: pointer; font-weight: 600; font-
   .diff th, .diff td { display: block; border: 0; padding: 4px 6px; }
 }
 @media print { .side, .login { display: none !important; } .shell { display: block; } }
+
+/* gerçek veri içe aktarma */
+.imp-box { margin-top: 16px; padding: 12px; border: 1px dashed var(--border); border-radius: 12px; background: var(--surface-2); }
+.imp-h { margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.imp-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 8px 0 4px; }
+.imp-file { position: relative; text-align: center; cursor: pointer; }
+.imp-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.imp-steps { padding-left: 18px; margin: 6px 0; display: flex; flex-direction: column; gap: 6px; }
+.t-ok { color: var(--ok); }
+.demo-banner.real { background: var(--ok-soft); color: var(--ok); border-bottom-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+.demo-banner.real .linklike { color: inherit; font-size: inherit; }
+.manual-btn { display: block; margin-top: 4px; font-size: .74rem; }
+.req .manual-btn { margin-left: auto; }
+.real-card { border-color: var(--ok); }
+.diff.cs td:nth-child(2) { color: var(--text); }

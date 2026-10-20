@@ -21,6 +21,31 @@
 
 Bonus: aynı kural motoru **gerçek OBS'nin içinde çalışan bir Chrome eklentisi** olarak da var (aşağıda "Kayıt Asistanı").
 
+## Gerçek verinle kullan (v1.1)
+
+OBS'nin öğrenciye açık bir API'si yok. YaşarOBS+ gerçek veriyi iki yoldan alır; ikisinde de **şifre istenmez** ve **veri tarayıcıdan çıkmaz** (sunucu yok):
+
+1. **Eklentiyle (önerilen):** Kayıt Asistanı eklentisini kur → OBS'ye kendin gir → Bölüm Ders Programı (tüm sınıflar), Müfredat Durum, Ders Kayıt, Devamsızlık, Not Listesi, Akademik Takvim sayfalarını bir kez aç → panelde **"YaşarOBS+'ta aç"** ya da sitenin giriş ekranında **"Eklentiden aktar"**. Eklenti veriyi yalnızca aynı bilgisayardaki YaşarOBS+ sayfasına `window.postMessage` ile verir.
+2. **Eklentisiz (dosya yükleme):** OBS sayfalarını `.html` olarak kaydet → giriş ekranında **"OBS sayfalarını yükle"**. Eklentiyle aynı ayrıştırıcılar (`extension/lib/obs-parsers*.js`) tarayıcıda çalışır. Başka bilgisayara taşımak için **"Verimi indir (.json)"** dosyası da yüklenebilir.
+
+Dönüştürücü: [`import.js`](import.js) (OBS verisi → uygulama modeli). Müfredat, notlar, şubeler öğrencinin kendi OBS'sinden geldiği için **her bölümde** çalışır; ön koşul / Bologna ağırlık paketi şimdilik Makine Mühendisliği için hazır. Müfredatta görünmeyen (eski müfredat eşdeğeri / muafiyet) dersler Mezuniyet sayfasında **"Eşdeğerle geçtim"** ile işaretlenir; GNO ve AKTS OBS'nin kendi değerinden alınır.
+
+## Kısıtlar ve araştırma (Constraints & research)
+
+| Kısıt | Bulgu (gerçek OBS incelemesi) | Çözüm |
+|---|---|---|
+| API | Öğrenciye açık API yok; ASP.NET WebForms, içerik `IFRAME1` içinde sunucu tarafında üretiliyor | Sayfaları okuyan DOM ayrıştırıcıları (eklenti + site ortak) |
+| Yükleme | Dışa aktarım neredeyse yok; transkript PDF'i biçimsiz | Kaydedilmiş `.html` sayfaları veya `.json` yükleme |
+| Oturum | Tarayıcı başına tek oturum/tek sekme ("Otomasyon başka bir sekmede açık"), süreli oturum | Eklenti istek atmaz, öğrencinin sekmesini okur; süre bitmeden uyarır |
+| Giriş | e-Devlet / doğrulama; şifreyi üçüncü tarafın tutması güvenlik/KVKK açısından kabul edilemez | Şifre asla istenmez |
+| Kontenjan | Şube doluluğu öğrenciye gösterilmiyor (yalnız derslik kapasitesi) | "Bilinmiyor" + öğrencinin "dolu" işareti, Plan A/B/C anında yeniden hesap |
+| Kayıt yazma | Ders ekleme yalnız OBS formuyla | Bilinçli salt-okunur: plan + kopyalanabilir şube listesi |
+| Eşdeğerlik | Müfredat Durum yalnız güncel müfredatı gösterir | "Eşdeğerle geçtim" işareti; OBS'nin GNO/AKTS değerleri |
+| Bölümler | Ön koşullar bölüm sitelerinde (PDF/diyagram), program bölüm başına xlsx | Veri öğrencinin OBS'sinden; ön koşul paketleri bölüm bölüm eklenir |
+| Gizlilik | Not/devamsızlık kişisel veri (KVKK) | Sunucu yok, ad/numara okunmaz, tek tıkla silme ([gizlilik](privacy.html)) |
+
+**Piyasa yolu:** Chrome Web Store paketi hazır (`extension.zip`, Manifest V3, yalnızca `storage` izni, gizlilik politikası: [`privacy.html`](privacy.html)). Sonraki adım üniversiteyle resmi bir okuma API'si / SSO entegrasyonu: kural motoru (`extension/lib/kayit-core.js`) olduğu gibi taşınabilir.
+
 ---
 
 # Kayıt Asistanı

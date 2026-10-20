@@ -8,7 +8,8 @@
   /* Ortak kural motoru (Chrome eklentisiyle paylaşılır): extension/lib/kayit-core.js */
   var K = window.KayitCore, RV = window.KayitRoadmapView;
   var DAYS = R.timetable.days;
-  var KEY = "kayitAsistani.v3", LANG_KEY = "kayitAsistani.lang";
+  var IMP = window.YOBSImport || null, REAL = !!(D.imported);
+  var KEY = "kayitAsistani.v3" + (REAL ? ".real" : ""), LANG_KEY = "kayitAsistani.lang";
   var TABS = ["home", "plan", "status", "flow", "reg", "att", "grades", "cal", "grad", "about"];
   var MO = window.KayitMore, ICS = window.KayitICS, CU = D.current || null;
   var MAX_SOL = 600, NODE_CAP = 250000, KEEP = 50, PAGE = 6;
@@ -47,6 +48,7 @@
     I.titles.forEach(function (p) { name = name.replace(p[0], p[1]); });
     return name;
   }
+  function sname() { return LANG === "en" && D.student.nameEn ? D.student.nameEn : D.student.name; }
   function cname(c) { return LANG === "en" ? c.nameEn : c.nameTr; }
   function dayShort(d) { return t("day." + d); }
   function dayLong(d) { return t("dayl." + d); }
@@ -85,6 +87,7 @@
   function gradeOf(code) { var a = lastAttempt(code); return a ? a.grade : ""; }
   /* m.21(6): tekrarlanan derslerde son not GNO'ya girer */
   function gpa() {
+    if (typeof D.student.gpa === "number") return D.student.gpa;   /* gerçek veri: OBS'nin GNO'su (müfredat dışı dersler dahil) */
     var pts = 0, ects = 0;
     Object.keys(attempts).forEach(function (code) {
       var g = gradeOf(code), p = R.gradePoints[g], e = ectsOf(code);
@@ -95,7 +98,7 @@
     var f = Math.pow(10, R.gpaDecimals);
     return Math.floor(pts / ects * f + 1e-9) / f;   /* kesme */
   }
-  function earnedEcts() { var n = 0; Object.keys(passed).forEach(function (c) { n += ectsOf(c); }); return n; }
+  function earnedEcts() { if (typeof D.student.earnedEcts === "number") return D.student.earnedEcts; var n = 0; Object.keys(passed).forEach(function (c) { n += ectsOf(c); }); return n; }
   function standing() {
     if (D.student.completedSemesters < RL.statusFromCompletedSemesters) {
       return { key: "first", label: { tr: "İlk yıl (statü uygulanmaz)", en: "First year (standing not applied)" }, max: RL.firstYearMax, prioritize: false };
@@ -245,6 +248,10 @@
 
   /* ---------- kontenjan ---------- */
   function quota(s) {
+    if (s.real) {   /* gerçek OBS verisi: kontenjan öğrenciye açık değil */
+      var mk = isMarkedFull(s);
+      return { left: mk ? 0 : 99, level: mk ? "full" : "ok", pct: mk ? 100 : 0, marked: mk, unknown: true, label: mk ? t("q.manualFull") : t("q.unknown") };
+    }
     var marked = isMarkedFull(s), left = marked ? 0 : s.capacity - s.enrolled;
     var low = Math.max(R.quota.lowAbsolute, Math.ceil(s.capacity * R.quota.lowRatio));
     var level = left <= 0 ? "full" : (left <= low ? "low" : "ok");
@@ -254,11 +261,11 @@
   function quotaBar(s) {
     var q = quota(s);
     return '<div class="quota q-' + q.level + '"><div class="qbar" role="img" aria-label="' + esc(q.label) + '"><span style="width:' + q.pct + '%"></span></div>' +
-      '<span class="qtxt" title="' + esc(t("q.simTitle")) + '">' + esc(q.label) + ' <small>' + (q.marked ? "" : s.enrolled + '/' + s.capacity + " " + esc(t("q.sim"))) + '</small></span></div>';
+      '<span class="qtxt" title="' + esc(t("q.simTitle")) + '">' + esc(q.label) + ' <small>' + (q.marked ? "" : q.unknown ? (s.capacity ? esc(t("q.room", { n: s.capacity })) : "") : s.enrolled + '/' + s.capacity + " " + esc(t("q.sim"))) + '</small></span></div>';
   }
   function isMarkedFull(s) { return state.fullIds.indexOf(s.id) >= 0; }
-  function hasSpace(s) { return s.enrolled < s.capacity && !isMarkedFull(s); }
-  function fillRatio(s) { return isMarkedFull(s) ? 1 : s.enrolled / s.capacity; }
+  function hasSpace(s) { return s.real ? !isMarkedFull(s) : s.enrolled < s.capacity && !isMarkedFull(s); }
+  function fillRatio(s) { return isMarkedFull(s) ? 1 : s.real ? 0 : s.enrolled / s.capacity; }
   /* aynı dersin, sepetin geri kalanıyla (sert) çakışmayan ve yeri olan diğer şubeleri; en boş olan önce */
   function alternatives(sec) {
     var others = cartSections().filter(function (c) { return c.code !== sec.code; });
@@ -754,6 +761,13 @@
       RV.render(B, { t: t, lang: LANG, num2: num2, name: nameOf, M: M, expected: state.rm.expected, mode: mode,
         modes: [{ v: "suggest", label: t("rm.mode.suggest") }, { v: "cart", label: t("rm.mode.cart") }] }) + '</div>';
   }
+  /* gerçek veri: müfredatta görünmeyen (eski müfredat eşdeğeri / muafiyet) dersi elle "geçtim" işaretleme */
+  function manualBtn(r) {
+    if (!REAL || !IMP) return "";
+    var on = IMP.manual().indexOf(r.code) >= 0;
+    if (!on && r.state !== "todo") return "";
+    return '<button type="button" class="linklike small manual-btn" data-act="manual-pass" data-code="' + esc(r.code) + '" title="' + esc(t("man.tip")) + '">' + esc(t(on ? "man.undo" : "man.mark")) + '</button>';
+  }
   function renderGrad() {
     var g = gradStats(), st = standing(), gp = gpa(), min = R.graduation.minGpa;
     var doneCount = g.rows.filter(function (r) { return r.state === "done"; }).length;
@@ -784,7 +798,7 @@
     var labels = { done: ["ok", "grad.s.done"], failed: ["bad", "grad.s.failed"], retake: ["warn", "grad.s.retake"], cart: ["info", "grad.s.cart"], todo: ["neutral", "grad.s.todo"] };
     html += '<div class="card"><h3>' + esc(t("grad.reqT")) + '</h3><div class="req-grid">' + g.rows.map(function (r) {
       var l = labels[r.state];
-      return '<div class="req req-' + r.state + '"><div><strong>' + esc(r.code) + '</strong> ' + esc(r.name) + '<div class="small muted">' + r.ects + ' ' + esc(t("unit.ects")) + (r.grade ? " · " + esc(r.grade) : "") + (r.offered ? "" : " · " + esc(t("grad.notOffered"))) + '</div></div>' + badge(l[0], t(l[1])) + '</div>';
+      return '<div class="req req-' + r.state + '"><div><strong>' + esc(r.code) + '</strong> ' + esc(r.name) + '<div class="small muted">' + r.ects + ' ' + esc(t("unit.ects")) + (r.grade ? " · " + esc(r.grade) : "") + (r.offered ? "" : " · " + esc(t("grad.notOffered"))) + '</div></div>' + badge(l[0], t(l[1])) + manualBtn(r) + '</div>';
     }).join("") + '</div></div>';
     html += '<div class="card"><h3>' + esc(t("grad.elecT")) + '</h3><p class="muted small">' + esc(t("grad.elecNote")) + '</p>' + g.elec.map(function (e) {
       var short = Math.max(0, e.need - e.earned - e.cart);
@@ -1005,7 +1019,7 @@
   }
   function renderHeader() {
     var tot = cartTotals(), limit = limitNow(), s = D.student;
-    $("studentChip").innerHTML = '<strong>' + esc(s.name) + '</strong><span>' + esc(s.no) + ' · ' + esc(t("hdr.gpa")) + ' ' + num2(gpa()) + '</span>';
+    $("studentChip").innerHTML = '<strong>' + esc(sname()) + '</strong><span>' + (s.no ? esc(s.no) + ' · ' : '') + + esc(t("hdr.gpa")) + ' ' + num2(gpa()) + '</span>';
     $("cartPill").innerHTML = esc(t("hdr.cart")) + ': <strong>' + tot.count + '</strong> · <strong>' + tot.units + '</strong>/' + limit + ' ' + esc(unitName());
     $("cartPill").className = "cart-pill" + (tot.units > limit ? " over" : "");
     $("flowDot").hidden = state.flow.status !== "pending";
@@ -1020,7 +1034,19 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (el) { el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
-    $("demoNote").textContent = t("demo.note", { u: D.meta.university, d: D.meta.department, term: L(D.meta.term) });
+    if (REAL) {
+      var ic = D.imported.counts;
+      $("demoNote").innerHTML = esc(t("real.note", { p: D.meta.department, term: L(D.meta.term), d: new Date(D.imported.at).toLocaleString(locale()), c: ic.completed, s: ic.sections })) +
+        (D.imported.isME ? "" : " " + esc(t("real.notME"))) +
+        ' <button type="button" class="linklike" data-act="imp-export">' + esc(t("imp.export")) + '</button> · <button type="button" class="linklike" data-act="imp-clear">' + esc(t("imp.clear")) + '</button>';
+      document.querySelector(".demo-banner strong").textContent = t("real.label");
+      document.querySelector(".demo-banner").classList.add("real");
+      $("loginBtn").textContent = t("login.btnReal");
+      $("loginNo").textContent = t("real.who", { n: ic.completed });
+      $("loginProg").textContent = D.meta.university + " · " + D.meta.department;
+      $("impClear").hidden = false;
+    } else $("demoNote").textContent = t("demo.note", { u: D.meta.university, d: D.meta.department, term: L(D.meta.term) });
+    if (IMP && IMP.error) $("impMsg").textContent = t("imp.err", { e: IMP.error });
     var grp = D.meta.group.filter(function (g) { return !/^Üye \d/.test(g); });
     $("footGroup").textContent = grp.length ? t("foot.group") + " " + grp.join(" · ") : "";
     var cur = $("fSem").value, o = '<option value="">' + esc(t("opt.all")) + '</option>', sems = {};
@@ -1033,7 +1059,7 @@
     var fr = '<option value="">' + esc(t("pref.freeNone")) + '</option>' + DAYS.map(function (d) { return '<option value="' + d + '">' + esc(dayLong(d)) + '</option>'; }).join("");
     $("prefFree").innerHTML = fr; syncPrefs();
     $("courseOptions").innerHTML = D.courses.map(function (c) { return '<option value="' + esc(c.code + " - " + cname(c)) + '"></option>'; }).join("");
-    $("scenarioSel").innerHTML = ["", "balanced", "problem", "empty"].map(function (k) { return '<option value="' + k + '">' + esc(t(k ? "sc." + k : "sc.custom")) + '</option>'; }).join("");
+    $("scenarioSel").innerHTML = ["", D.scenarios.mine ? "mine" : null, "balanced", D.scenarios.problem ? "problem" : null, "empty"].filter(function (k) { return k !== null; }).map(function (k) { return '<option value="' + k + '">' + esc(t(k ? "sc." + k : "sc.custom")) + '</option>'; }).join("");
     renderRules(); renderIntro();
   }
   function renderIntro() { $("introCard").hidden = !!state.introDismissed; }
@@ -1074,6 +1100,7 @@
     var sc = D.scenarios || {};
     if (key === "balanced" && sc.balanced) state.cart = buildBalanced(sc.balanced.codes);
     else if (key === "problem" && sc.problem) state.cart = sc.problem.sections.filter(function (id) { return secById[id]; });
+    else if (key === "mine" && sc.mine) state.cart = sc.mine.sections.filter(function (id) { return secById[id]; });
     else if (key === "empty") state.cart = [];
     else return;
     state.fullIds = []; state.scenario = key;
@@ -1139,7 +1166,13 @@
         return { hours: hours, allow: allow, used: used, left: left, weeks: Math.floor(Math.max(0, left) / hours),
           level: used > allow ? "over" : (left < hours || left <= allow * 0.25 ? "warn" : "ok") };
       }
-      var th = part(T, CU.absence.theory, u.t), pr = part(P, CU.absence.practice, u.u);
+      var th, pr;
+      if (u.allowT !== undefined && u.allowT !== null) {   /* gerçek veri: sınır OBS'den */
+        var hrs = u.hoursT || T || 1, left0 = u.allowT - u.t;
+        th = { hours: hrs, allow: u.allowT, used: u.t, left: left0, weeks: Math.floor(Math.max(0, left0) / hrs),
+          level: u.t > u.allowT ? "over" : (left0 < hrs || left0 <= u.allowT * 0.25 ? "warn" : "ok") };
+        pr = null;
+      } else { th = part(T, CU.absence.theory, u.t); pr = part(P, CU.absence.practice, u.u); }
       var lv = [th, pr].filter(Boolean).map(function (x) { return x.level; });
       var level = lv.indexOf("over") >= 0 ? "over" : lv.indexOf("warn") >= 0 ? "warn" : "ok";
       return { code: code, name: courseName(code), th: th, pr: pr, level: level, retake: isFRetake(code) };
@@ -1164,7 +1197,7 @@
     html += '<div class="att-grid">' + A.rows.map(function (r) {
       var lb = { over: ["bad", "att.b.over"], warn: ["warn", "att.b.warn"], ok: ["ok", "att.b.ok"] }[r.level], c = byCode[r.code];
       return '<div class="card att-card lvl-' + r.level + '"><div class="card-head"><div><strong>' + esc(r.code) + '</strong> <span>' + esc(r.name) + '</span><div class="small muted">T+U ' + c.tul[0] + '+' + c.tul[1] + ' · ' + c.ects + ' ' + esc(t("unit.ects")) + '</div></div>' + badge(lb[0], t(lb[1])) + '</div>' +
-        attPartHtml(t("att.theory"), r.th) + attPartHtml(t("att.practice"), r.pr) +
+        (CU.attendance[r.code].single ? attPartHtml(t("att.total"), r.th) : attPartHtml(t("att.theory"), r.th) + attPartHtml(t("att.practice"), r.pr)) +
         (r.retake ? '<p class="small muted">' + esc(t("att.retakeNote")) + '</p>' : "") + '</div>';
     }).join("") + '</div>';
     html += '<div class="card"><h3>' + esc(t("att.howT")) + '</h3><ul class="rule-list small"><li>' + esc(t("att.how1")) + '</li><li>' + esc(t("att.how2")) + '</li><li>' + esc(t("att.how3")) + '</li></ul></div>';
@@ -1297,7 +1330,7 @@
     });
     var up = upcoming(45);
     if (up.length) todo.push({ lv: "info", txt: t("home.t.next", { n: up[0].ev.name, d: up[0].txt }), tab: "cal" });
-    var html = '<div class="home-hello"><div><h2>' + esc(t("home.hello", { n: D.student.name })) + '</h2><p class="muted">' + esc(D.meta.department + " · " + L(D.meta.term) + " · " + t("home.advisor") + ": " + D.student.advisor) + '</p></div>' +
+    var html = '<div class="home-hello"><div><h2>' + esc(t("home.hello", { n: sname() })) + '</h2><p class="muted">' + esc(D.meta.department + " · " + L(D.meta.term) + (D.student.advisor ? " · " + t("home.advisor") + ": " + D.student.advisor : "")) + '</p></div>' +
       '<span class="muted small">' + esc(dlong(nowDate(), "long")) + '</span></div>';
     html += '<div class="stat-grid">' +
       '<button type="button" class="card stat tile" data-act="goto" data-tab="grad"><span class="muted small">' + esc(t("home.s.gpa")) + '</span><span class="stat-n ' + (gp < 2 ? "t-bad" : "") + '">' + num2(gp) + '</span><span class="small muted">' + esc(L(st.label)) + '</span></button>' +
@@ -1313,6 +1346,63 @@
     $("homeView").innerHTML = html;
   }
 
+  /* ---- gerçek veri içe aktarma (import.js) ---- */
+  var extSeen = false;
+  window.addEventListener("message", function (e) {
+    if (e.source !== window || !e.data || typeof e.data.type !== "string") return;
+    if (e.data.type === "yobs:hello") { extSeen = true; var st = $("impExtState"); if (st) st.textContent = t("imp.extFound"); }
+  });
+  function impMsg(txt, cls) { var m = $("impMsg"); if (m) { m.textContent = txt; m.className = "small " + (cls || ""); } }
+  function finishImport(data, how) {
+    if (!IMP || !IMP.valid(data)) { impMsg(t("imp.empty"), "t-bad"); return; }
+    try { IMP.convert(data); } catch (e) { impMsg(t("imp.err", { e: e.message }), "t-bad"); return; }
+    IMP.save(data);
+    try { localStorage.removeItem("kayitAsistani.v3.real"); sessionStorage.setItem(LOGIN_KEY, "1"); } catch (e) { /* yoksay */ }
+    impMsg(t("imp.ok", { h: how }), "t-ok");
+    setTimeout(function () { location.href = location.pathname + "#home"; location.reload(); }, 600);
+  }
+  function importFromExtension() {
+    var done = false;
+    impMsg(t("imp.asking"));
+    function onMsg(e) {
+      if (e.source !== window || !e.data || e.data.type !== "yobs:data") return;
+      done = true; window.removeEventListener("message", onMsg);
+      finishImport(e.data.data, t("imp.viaExt"));
+    }
+    window.addEventListener("message", onMsg);
+    window.postMessage({ type: "yobs:request" }, location.origin);
+    setTimeout(function () { if (!done) { window.removeEventListener("message", onMsg); impMsg(t(extSeen ? "imp.extNoData" : "imp.noExt"), "t-bad"); } }, 1800);
+  }
+  function exportReal() {
+    var r = IMP && IMP.raw(); if (!r) return;
+    var blob = new Blob([JSON.stringify(r)], { type: "application/json" }), url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = "yasarobs-plus-verim.json"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+  if ($("impFile")) $("impFile").addEventListener("change", function () {
+    var files = this.files; if (!files || !files.length || !IMP) return;
+    impMsg(t("imp.reading", { n: files.length }));
+    IMP.fromHtmlFiles(files).then(function (r) {
+      var ok = r.log.filter(function (x) { return x.kind; });
+      if (!ok.length) { impMsg(t("imp.noneRecognized"), "t-bad"); return; }
+      impMsg(t("imp.recognized", { l: ok.map(function (x) { return t("kind." + x.kind); }).join(", ") }));
+      if (IMP.raw()) r.data = mergeKeep(IMP.raw(), r.data);
+      finishImport(r.data, t("imp.viaFile", { n: ok.length }));
+    }, function (e) { impMsg(t("imp.err", { e: e.message }), "t-bad"); });
+  });
+  /* önceki içe aktarmanın üstüne ekle (sayfaları birkaç seferde yükleyebilmek için) */
+  function mergeKeep(a, b) {
+    if (!b) return a;
+    Object.keys(b).forEach(function (k) {
+      if (k === "timetable") { a.timetable = a.timetable || {}; Object.keys(b.timetable || {}).forEach(function (key) {
+        var x = a.timetable[key], y = b.timetable[key];
+        if (x) Object.keys(y.years || {}).forEach(function (yy) { x.years[yy] = y.years[yy]; }); else a.timetable[key] = y; }); }
+      else if (b[k] !== null && b[k] !== undefined && k !== "v") a[k] = b[k];
+    });
+    return a;
+  }
+  if (/[?&]import=ext/.test(location.search)) setTimeout(importFromExtension, 400);
+
   /* ---- OBS'den farkı ---- */
   var DIFF = [
     ["d.conf", "plan"], ["d.pre", "status"], ["d.quota", "plan"], ["d.limit", "plan"], ["d.adv", "flow"], ["d.day", "reg"],
@@ -1323,6 +1413,14 @@
     html += '<div class="card"><table class="diff"><thead><tr><th>' + esc(t("ab.th.p")) + '</th><th>' + esc(t("ab.th.obs")) + '</th><th>YaşarOBS+</th></tr></thead><tbody>' + DIFF.map(function (d) {
       return '<tr><th scope="row">' + esc(t(d[0] + ".p")) + '</th><td>' + esc(t(d[0] + ".o")) + '</td><td>' + esc(t(d[0] + ".n")) + ' <button type="button" class="linklike" data-act="goto" data-tab="' + d[1] + '">' + esc(t("ab.try")) + '</button></td></tr>';
     }).join("") + '</tbody></table></div>';
+    html += '<div class="card"><h3>' + esc(t("cs.title")) + '</h3><p class="muted small">' + esc(t("cs.intro")) + '</p><table class="diff cs"><thead><tr><th>' + esc(t("cs.th.c")) + '</th><th>' + esc(t("cs.th.f")) + '</th><th>' + esc(t("cs.th.s")) + '</th></tr></thead><tbody>' +
+      ["api", "upload", "session", "login", "quota", "write", "equiv", "dept", "privacy"].map(function (k) {
+        return '<tr><th scope="row">' + esc(t("cs." + k + ".c")) + '</th><td>' + esc(t("cs." + k + ".f")) + '</td><td>' + esc(t("cs." + k + ".s")) + '</td></tr>';
+      }).join("") + '</tbody></table></div>';
+    html += '<div class="card real-card"><h3>' + esc(t("ab.realT")) + '</h3><ol class="rule-list small"><li>' + esc(t("imp.h1")) + '</li><li>' + esc(t("imp.h2")) + '</li><li>' + esc(t("imp.h3")) + '</li></ol>' +
+      '<div class="btn-row">' + (REAL ? '<button type="button" class="btn small ghost" data-act="imp-export">' + esc(t("imp.export")) + '</button><button type="button" class="btn small ghost" data-act="imp-clear">' + esc(t("imp.clear")) + '</button>'
+        : '<button type="button" class="btn small primary" data-act="logout">' + esc(t("ab.realGo")) + '</button>') +
+      '<a class="btn small ghost" href="privacy.html">' + esc(t("ab.privacy")) + '</a></div></div>';
     html += '<div class="ab-grid"><div class="card"><h3>' + esc(t("ab.dataT")) + '</h3><ul class="rule-list small">' + R.sources.map(function (s) { return '<li><a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(L(s)) + '</a></li>'; }).join("") +
       '<li><a href="' + esc(R.source.url) + '" target="_blank" rel="noopener">' + esc(L(R.source)) + '</a></li><li>' + esc(t("ab.bologna")) + '</li></ul><p class="small muted">' + esc(t("ab.fake")) + '</p></div>';
     html += '<div class="card"><h3>' + esc(t("ab.howT")) + '</h3><ul class="rule-list small"><li>' + esc(t("ab.h1")) + '</li><li>' + esc(t("ab.h2")) + '</li><li>' + esc(t("ab.h3")) + '</li><li>' + esc(t("ab.h4")) + '</li></ul></div>';
@@ -1345,6 +1443,10 @@
       case "login": setLogin(true); break;
       case "logout": setLogin(false); break;
       case "ics": downloadICS(); break;
+      case "imp-ext": importFromExtension(); break;
+      case "imp-clear": if (IMP && window.confirm(t("imp.clearQ"))) { IMP.clear(); try { localStorage.removeItem("kayitAsistani.v3.real"); } catch (er) { /* yoksay */ } location.href = location.pathname; } break;
+      case "imp-export": exportReal(); break;
+      case "manual-pass": if (IMP) { IMP.toggleManual(el.getAttribute("data-code")); location.reload(); } break;
       case "gx-clear": delete state.gx[el.getAttribute("data-code")]; save(); renderGrades(); renderHome(); break;
       case "rm-fail": {
         var fc = el.getAttribute("data-code");
@@ -1437,9 +1539,9 @@
   });
 
   /* ---------- başlangıç ---------- */
-  CUR = buildBalanced(Object.keys(CU ? CU.attendance : {})).map(function (id) { return secById[id]; });
+  CUR = (CU && CU.sections ? CU.sections : buildBalanced(Object.keys(CU ? CU.attendance : {}))).map(function (id) { return secById[id]; }).filter(Boolean);
   applyStatic();
-  if (isFresh) { state.tab = "home"; applyScenario("balanced", true); } else renderAll();
+  if (isFresh) { state.tab = "home"; applyScenario(REAL ? "mine" : "balanced", true); } else renderAll();
   var h0 = (location.hash || "").slice(1);
   setTab(TABS.indexOf(h0) >= 0 ? h0 : state.tab);
   window.addEventListener("hashchange", function () { var h = location.hash.slice(1); if (TABS.indexOf(h) >= 0 && h !== state.tab) setTab(h); });

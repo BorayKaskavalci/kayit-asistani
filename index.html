@@ -29,6 +29,19 @@
         <div><dt data-i18n="login.prog">Program</dt><dd id="loginProg"></dd></div>
       </dl>
       <button type="button" class="btn primary block" data-act="login" id="loginBtn" data-i18n="login.btn">Demo öğrenci olarak giriş yap</button>
+      <div class="imp-box" id="impBox">
+        <p class="imp-h"><strong data-i18n="imp.title">Kendi OBS verinle kullan</strong> <span class="badge b-ok" data-i18n="imp.badge">gerçek veri</span></p>
+        <p class="small muted" data-i18n="imp.lead">OBS'nin öğrenciye açık bir API'si yok. Verin iki yoldan gelir; ikisinde de şifren istenmez ve veri bu tarayıcıdan çıkmaz.</p>
+        <div class="imp-row">
+          <button type="button" class="btn block" data-act="imp-ext" id="impExtBtn"><span data-i18n="imp.ext">Eklentiden aktar</span> <small class="muted" id="impExtState"></small></button>
+          <label class="btn ghost block imp-file"><span data-i18n="imp.file">OBS sayfalarını yükle (.html / .json)</span><input type="file" id="impFile" multiple accept=".html,.htm,.json,text/html,application/json"></label>
+        </div>
+        <p class="small" id="impMsg" role="status" aria-live="polite"></p>
+        <details class="small"><summary data-i18n="imp.howT">Nasıl?</summary>
+          <ol class="imp-steps"><li data-i18n="imp.h1"></li><li data-i18n="imp.h2"></li><li data-i18n="imp.h3"></li></ol>
+        </details>
+        <button type="button" class="linklike" data-act="imp-clear" id="impClear" hidden data-i18n="imp.clear">Gerçek veriyi sil, demo öğrenciye dön</button>
+      </div>
       <ul class="login-feat">
         <li data-i18n="login.f1"></li><li data-i18n="login.f2"></li><li data-i18n="login.f3"></li><li data-i18n="login.f4"></li>
       </ul>
@@ -234,6 +247,10 @@
   <script src="extension/lib/weights.js"></script>
   <script src="extension/lib/ka-more.js"></script>
   <script src="extension/lib/ics.js"></script>
+  <script src="extension/lib/obs-parsers.js"></script>
+  <script src="extension/lib/obs-parsers-more.js"></script>
+  <script src="extension/lib/bg-core.js"></script>
+  <script src="import.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
